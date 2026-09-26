@@ -39,4 +39,4 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
 FROM scratch AS export
 COPY --from=migrations \
     /src/NetNotepad.AuthService/Migrations \
-    /Migrations
+    /
