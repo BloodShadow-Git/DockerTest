@@ -1,0 +1,10 @@
+<api type="debug" assembly-name="NetNotepad.MAUIClient" mvid="c386f8316e27417286ab57bd4e609c48">
+  <java-to-managed>
+    <entry java-name="crc64ab0483fc0702b5ba/MainActivity" managed-name="NetNotepad.MAUIClient.MainActivity, NetNotepad.MAUIClient" managed-type-token-id="33554442" />
+    <entry java-name="crc64ab0483fc0702b5ba/MainApplication" managed-name="NetNotepad.MAUIClient.MainApplication, NetNotepad.MAUIClient" managed-type-token-id="33554443" />
+  </java-to-managed>
+  <managed-to-java>
+    <entry java-name="crc64ab0483fc0702b5ba/MainActivity" managed-name="NetNotepad.MAUIClient.MainActivity, NetNotepad.MAUIClient" managed-type-token-id="33554442" />
+    <entry java-name="crc64ab0483fc0702b5ba/MainApplication" managed-name="NetNotepad.MAUIClient.MainApplication, NetNotepad.MAUIClient" managed-type-token-id="33554443" />
+  </managed-to-java>
+</api>

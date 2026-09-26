@@ -1,0 +1,14 @@
+D:\Users\optim\Desktop\CSPrograms\DockerTest\NetNotepad.UserService\bin\Debug\net10.0\NetNotepad.UserService.exe
+D:\Users\optim\Desktop\CSPrograms\DockerTest\NetNotepad.UserService\bin\Debug\net10.0\NetNotepad.UserService.deps.json
+D:\Users\optim\Desktop\CSPrograms\DockerTest\NetNotepad.UserService\bin\Debug\net10.0\NetNotepad.UserService.runtimeconfig.json
+D:\Users\optim\Desktop\CSPrograms\DockerTest\NetNotepad.UserService\bin\Debug\net10.0\NetNotepad.UserService.dll
+D:\Users\optim\Desktop\CSPrograms\DockerTest\NetNotepad.UserService\bin\Debug\net10.0\NetNotepad.UserService.pdb
+D:\Users\optim\Desktop\CSPrograms\DockerTest\NetNotepad.UserService\obj\Debug\net10.0\NetNotepad.UserService.GeneratedMSBuildEditorConfig.editorconfig
+D:\Users\optim\Desktop\CSPrograms\DockerTest\NetNotepad.UserService\obj\Debug\net10.0\NetNotepad.UserService.AssemblyInfoInputs.cache
+D:\Users\optim\Desktop\CSPrograms\DockerTest\NetNotepad.UserService\obj\Debug\net10.0\NetNotepad.UserService.AssemblyInfo.cs
+D:\Users\optim\Desktop\CSPrograms\DockerTest\NetNotepad.UserService\obj\Debug\net10.0\NetNotepad.UserService.csproj.CoreCompileInputs.cache
+D:\Users\optim\Desktop\CSPrograms\DockerTest\NetNotepad.UserService\obj\Debug\net10.0\NetNotepad.UserService.dll
+D:\Users\optim\Desktop\CSPrograms\DockerTest\NetNotepad.UserService\obj\Debug\net10.0\refint\NetNotepad.UserService.dll
+D:\Users\optim\Desktop\CSPrograms\DockerTest\NetNotepad.UserService\obj\Debug\net10.0\NetNotepad.UserService.pdb
+D:\Users\optim\Desktop\CSPrograms\DockerTest\NetNotepad.UserService\obj\Debug\net10.0\NetNotepad.UserService.genruntimeconfig.cache
+D:\Users\optim\Desktop\CSPrograms\DockerTest\NetNotepad.UserService\obj\Debug\net10.0\ref\NetNotepad.UserService.dll

@@ -1,0 +1,215 @@
+x-common:
+  restart: &restart
+    restart: unless-stopped
+  healthcheck-redis: &healthcheck-redis
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+  healthcheck-postgres: &healthcheck-postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+  healthcheck-rabbitmq: &healthcheck-rabbitmq
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "check_port_listener", "5672" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+  dotnet-security: &dotnet-security
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+  dotnet: &dotnet
+    <<:
+      - *restart
+      - *dotnet-security
+  nginx: &nginx
+    image: nginx:1.31.5-alpine-slim
+    <<: *restart
+  postgres: &postgres
+    image: postgres:18.6-alpine3.24
+    <<:
+      - *restart
+      - *healthcheck-postgres
+  redis: &redis
+    image: redis:8.10.1-alpine3.23
+    <<:
+      - *restart
+      - *healthcheck-redis
+  rabbitmq: &rabbitmq
+    image: rabbitmq:4.3.6-management-alpine
+    <<:
+      - *restart
+      - *healthcheck-rabbitmq
+
+services:
+  autoheal:
+    image: willfarrell/autoheal:1.2.0
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=all
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      netnotepad-auth:
+        condition: service_healthy
+      netnotepad-http:
+        condition: service_healthy
+
+  gateway:
+    <<: *nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./configs/nginx.conf:/etc/nginx/nginx.conf:ro
+    environment:
+      DOLLAR: $$
+    depends_on:
+      netnotepad-http:
+        condition: service_healthy
+      netnotepad-auth:
+        condition: service_healthy
+
+  service-gateway:
+    <<: *nginx
+    ports:
+      - "127.0.0.1:8085:80"
+    volumes:
+      - ./configs/service-nginx.conf:/etc/nginx/nginx.conf:ro
+    environment:
+      DOLLAR: $$
+    depends_on:
+      pgadmin:
+        condition: service_healthy
+      rabbitmq-http:
+        condition: service_healthy
+
+  postgres-auth:
+    <<: *postgres
+    environment:
+      POSTGRES_DB: ${AUTH_POSTGRES_NAME}
+      POSTGRES_USER: ${AUTH_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASS}
+    volumes:
+      - ./volumes/postgres_auth:/var/lib/postgresql
+
+  redis-auth:
+    <<: *redis
+
+  redis-http:
+    <<: *redis
+
+  rabbitmq-http:
+    <<: *rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_PASS: ${HTTP_RABBITMQ_PASS}
+      RABBITMQ_DEFAULT_USER: ${HTTP_RABBITMQ_USER}
+    volumes:
+      - ./configs/rabbitmq-http:/etc/rabbitmq
+  rabbitmq-auth:
+    <<: *rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_PASS: ${AUTH_RABBITMQ_PASS}
+      RABBITMQ_DEFAULT_USER: ${AUTH_RABBITMQ_USER}
+    volumes:
+      - ./configs/rabbitmq-auth:/etc/rabbitmq
+
+  netnotepad-auth:
+    labels:
+      - "autoheal=true"
+    build:
+      dockerfile: NetNotepad.AuthService/Dockerfile
+      x-bake:
+        output:
+          - type=docker
+          - type=local,dest=./NetNotepad.AuthService
+      args:
+        BUILD_CONFIGURATION: ${DOTNET_BUILD_CONFIGURATION:-Release}
+    <<: *dotnet
+    environment:
+      PORT: 8080
+      POSTGRESDBHOST: ${AUTH_POSTGRES_HOST}
+      POSTGRESDBPORT: ${AUTH_POSTGRES_PORT}
+      POSTGRESDBNAME: ${AUTH_POSTGRES_NAME}
+      POSTGRESDBUSER: ${AUTH_POSTGRES_USER}
+      POSTGRESDBPASS: ${AUTH_POSTGRES_PASS}
+      HTTP_RABBITMQ_HOST: ${HTTP_RABBITMQ_HOST}
+      HTTP_RABBITMQ_PORT: ${HTTP_RABBITMQ_PORT}
+      HTTP_RABBITMQ_USER: ${HTTP_RABBITMQ_USER}
+      HTTP_RABBITMQ_PASS: ${HTTP_RABBITMQ_PASS}
+      REDISHOST: ${AUTH_REDIS_HOST}
+      REDISPORT: ${AUTH_REDIS_PORT}
+      AUTH_QUEUE_NAME: ${AUTH_QUEUE_NAME}
+      AUTH_INT_QUEUE_NAME: ${AUTH_INT_QUEUE_NAME}
+      AUTH_RABBITMQ_HOST: ${AUTH_RABBITMQ_HOST}
+      AUTH_RABBITMQ_PORT: ${AUTH_RABBITMQ_PORT}
+      AUTH_RABBITMQ_USER: ${AUTH_RABBITMQ_USER}
+      AUTH_RABBITMQ_PASS: ${AUTH_RABBITMQ_PASS}
+    secrets:
+      - jwt-secret-pri
+      - jwt-secret-pub
+    depends_on:
+      postgres-auth:
+        condition: service_healthy
+      redis-auth:
+        condition: service_healthy
+      rabbitmq-http:
+        condition: service_healthy
+      rabbitmq-auth:
+        condition: service_healthy
+
+  netnotepad-http:
+    labels:
+      - "autoheal=true"
+    build:
+      dockerfile: NetNotepad.HttpHandler/Dockerfile
+      args:
+        BUILD_CONFIGURATION: ${DOTNET_BUILD_CONFIGURATION:-Release}
+    <<: *dotnet
+    environment:
+      PORT: 8080
+      REDISHOST: ${HTTP_REDIS_HOST}
+      REDISPORT: ${HTTP_REDIS_PORT}
+      RABBITMQ_HOST: ${HTTP_RABBITMQ_HOST}
+      RABBITMQ_PORT: ${HTTP_RABBITMQ_PORT}
+      RABBITMQ_USER: ${HTTP_RABBITMQ_USER}
+      RABBITMQ_PASS: ${HTTP_RABBITMQ_PASS}
+      AUTH_QUEUE_NAME: ${AUTH_QUEUE_NAME}
+      USER_QUEUE_NAME: ${USER_QUEUE_NAME}
+      NOTEPAD_QUEUE_NAME: ${NOTEPAD_QUEUE_NAME}
+    depends_on:
+      redis-http:
+        condition: service_healthy
+      rabbitmq-http:
+        condition: service_healthy
+
+  pgadmin:
+    image: dpage/pgadmin4:9.18.0
+    environment:
+      PGADMIN_DEFAULT_HOST: "postgres-auth"
+      PGADMIN_DEFAULT_USERNAME: "pgadmin"
+      PGADMIN_DEFAULT_PASSWORD: "password"
+      PGADMIN_DEFAULT_EMAIL: "example@mail.com"
+    volumes:
+      - ./volumes/pgadmin:/var/lib/pgadmin
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost/misc/ping >/dev/null || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+secrets:
+  jwt-secret-pub:
+    file: ./secrets/jwt-public.pem
+  jwt-secret-pri:
+    file: ./secrets/jwt-private.pem
