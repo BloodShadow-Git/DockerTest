@@ -37,8 +37,6 @@ namespace NetNotepad.AuthService
             try
             {
                 PostgresConnectString = await PostgresClient.Connect();
-                using AppDBContext db = new();
-                await db.Database.MigrateAsync();
                 Log.Information("Postgres connected");
             }
             catch (Exception ex)

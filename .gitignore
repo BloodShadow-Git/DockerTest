@@ -1,0 +1,4 @@
+**/bin/
+**/obj/
+volumes
+secrets

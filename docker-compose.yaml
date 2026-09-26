@@ -128,10 +128,6 @@ services:
       - "autoheal=true"
     build:
       dockerfile: NetNotepad.AuthService/Dockerfile
-      x-bake:
-        output:
-          - type=docker
-          - type=local,dest=./NetNotepad.AuthService/Migrations,mode=delete
       args:
         BUILD_CONFIGURATION: ${DOTNET_BUILD_CONFIGURATION:-Release}
     <<: *dotnet

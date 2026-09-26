@@ -6,6 +6,7 @@ namespace NetNotepad.AuthService
     {
         public DbSet<User> Users { get; set; } = null!;
         public DbSet<RefreshTokenData> RefreshTokens { get; set; } = null!;
+        public AppDBContext() => Database.EnsureCreated();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
