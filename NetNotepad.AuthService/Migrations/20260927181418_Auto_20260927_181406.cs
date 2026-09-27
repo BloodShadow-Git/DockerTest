@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace NetNotepad.AuthService.Migrations
 {
     /// <inheritdoc />
-    public partial class Auto_20260927_172019 : Migration
+    public partial class Auto_20260927_181406 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

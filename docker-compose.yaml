@@ -10,7 +10,7 @@ x-common:
       start_period: 5s
   healthcheck-postgres: &healthcheck-postgres
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${AUTH_POSTGRES_USER} -d ${AUTH_POSTGRES_NAME}" ]
+      test: [ "CMD-SHELL", "pg_isready" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -142,8 +142,8 @@ services:
       target: runtime
       args:
         BUILD_CONFIGURATION: ${DOTNET_BUILD_CONFIGURATION:-Release}
-    volumes:
-      - ./NetNotepad.AuthService/Migrations:/src/NetNotepad.AuthService/Migrations
+    # volumes:
+    #   - ./NetNotepad.AuthService/Migrations:/src/NetNotepad.AuthService/Migrations
     <<: *dotnet
     environment:
       PORT: 8080

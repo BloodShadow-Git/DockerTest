@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NetNotepad.AuthService.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20260927172030_Auto_20260927_172019")]
-    partial class Auto_20260927_172019
+    [Migration("20260927181418_Auto_20260927_181406")]
+    partial class Auto_20260927_181406
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

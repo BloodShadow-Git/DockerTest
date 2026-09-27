@@ -14,10 +14,11 @@ RUN dotnet tool install --global dotnet-ef --version 10.*
 ENV PATH="${PATH}:/root/.dotnet/tools"
 ENTRYPOINT ["sh", "-c"]
 
-FROM prebuild AS build
+FROM migration AS build
 ARG BUILD_CONFIGURATION=Release
+RUN dotnet ef migrations add Auto_$(date +%Y%m%d_%H%M%S)
 RUN dotnet publish \
-    NetNotepad.AuthService/NetNotepad.AuthService.csproj \
+    /src/NetNotepad.AuthService/NetNotepad.AuthService.csproj \
     -c ${BUILD_CONFIGURATION} \
     -o /app/publish \
     /p:UseAppHost=false
