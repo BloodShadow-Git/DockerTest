@@ -38,6 +38,7 @@ namespace NetNotepad.AuthService
             {
                 PostgresConnectString = await PostgresClient.Connect();
                 AppDBContext db = new();
+                Log.Information("Current migrations count: {0}", db.Database.GetMigrations().Count());
                 db.Dispose();
                 Log.Information("Postgres connected");
             }

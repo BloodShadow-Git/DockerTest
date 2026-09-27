@@ -130,7 +130,7 @@ services:
       args:
         BUILD_CONFIGURATION: ${DOTNET_BUILD_CONFIGURATION:-Release}
     volumes:
-      - ./NetNotepad.AuthService/Migrations:/src/NetNotepad.AuthService/Migrations
+      - auth-migrations:/src/NetNotepad.AuthService/Migrations
     command:
       - dotnet ef migrations add Auto_$$(date +%Y%m%d_%H%M%S)
 
@@ -142,6 +142,8 @@ services:
       target: runtime
       args:
         BUILD_CONFIGURATION: ${DOTNET_BUILD_CONFIGURATION:-Release}
+    volumes:
+      - auth-migrations:/src/NetNotepad.AuthService/Migrations
     <<: *dotnet
     environment:
       PORT: 8080
@@ -223,3 +225,11 @@ secrets:
     file: ./secrets/jwt-public.pem
   jwt-secret-pri:
     file: ./secrets/jwt-private.pem
+
+volumes:
+  auth-migrations:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./NetNotepad.AuthService/Migrations

@@ -3,24 +3,20 @@ WORKDIR /src
 COPY NetNotepad.Contracts/*.csproj NetNotepad.Contracts/
 COPY NetNotepad.AuthService/*.csproj NetNotepad.AuthService/
 
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet restore NetNotepad.AuthService/NetNotepad.AuthService.csproj
+RUN dotnet restore NetNotepad.AuthService/NetNotepad.AuthService.csproj
 
 COPY NetNotepad.Contracts/. NetNotepad.Contracts/
 COPY NetNotepad.AuthService/. NetNotepad.AuthService/.
 
 FROM prebuild AS migration
 WORKDIR /src/NetNotepad.AuthService
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet restore NetNotepad.AuthService.csproj
 RUN dotnet tool install --global dotnet-ef --version 10.*
 ENV PATH="${PATH}:/root/.dotnet/tools"
 ENTRYPOINT ["sh", "-c"]
 
 FROM prebuild AS build
 ARG BUILD_CONFIGURATION=Release
-RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
-    dotnet publish \
+RUN dotnet publish \
     NetNotepad.AuthService/NetNotepad.AuthService.csproj \
     -c ${BUILD_CONFIGURATION} \
     -o /app/publish \

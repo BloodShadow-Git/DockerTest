@@ -4,12 +4,6 @@
     <ProjectReference Include="..\NetNotepad.Contracts\NetNotepad.Contracts.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="RabbitMQ.AMQP.Client" Version="1.4.0" />
-    <PackageReference Include="Serilog" Version="4.4.0" />
-    <PackageReference Include="StackExchange.Redis" Version="3.3.0" />
-  </ItemGroup>
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>

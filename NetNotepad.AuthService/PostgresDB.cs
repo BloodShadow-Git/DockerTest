@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
 
 namespace NetNotepad.AuthService
 {
@@ -6,13 +7,12 @@ namespace NetNotepad.AuthService
     {
         public DbSet<User> Users { get; set; } = null!;
         public DbSet<RefreshTokenData> RefreshTokens { get; set; } = null!;
-        public AppDBContext() => Database.Migrate();
+        public AppDBContext() => Migrate();
+        public AppDBContext(DbContextOptions options) : base(options) => Migrate();
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!string.IsNullOrEmpty(Program.PostgresConnectString)) { optionsBuilder.UseNpgsql(Program.PostgresConnectString); }
-            else { optionsBuilder.UseNpgsql("build"); }
-        }
+        private void Migrate() { if (!EF.IsDesignTime) { Database.Migrate(); } }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) { if (!optionsBuilder.IsConfigured) { optionsBuilder.UseNpgsql(Program.PostgresConnectString); } }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -23,4 +23,17 @@ namespace NetNotepad.AuthService
 
     public record User(Guid UserGuid, string UserName, string PasswordHash);
     public record RefreshTokenData(Guid UserGuid, string RefreshToken, DateTime LastUseDate, TimeSpan Ttl);
+
+    public class AppDBContextFactory : IDesignTimeDbContextFactory<AppDBContext>
+    {
+        public AppDBContext CreateDbContext(string[] args)
+        {
+            var options = new DbContextOptionsBuilder<AppDBContext>();
+
+            options.UseNpgsql(
+                "Host=localhost;Database=build;Username=build;Password=build");
+
+            return new AppDBContext(options.Options);
+        }
+    }
 }
