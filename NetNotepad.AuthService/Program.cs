@@ -37,6 +37,8 @@ namespace NetNotepad.AuthService
             try
             {
                 PostgresConnectString = await PostgresClient.Connect();
+                AppDBContext db = new();
+                db.Dispose();
                 Log.Information("Postgres connected");
             }
             catch (Exception ex)

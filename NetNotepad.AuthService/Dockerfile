@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS prebuild
 WORKDIR /src
 COPY NetNotepad.Contracts/*.csproj NetNotepad.Contracts/
 COPY NetNotepad.AuthService/*.csproj NetNotepad.AuthService/
@@ -9,6 +9,13 @@ RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
 COPY NetNotepad.Contracts/. NetNotepad.Contracts/
 COPY NetNotepad.AuthService/. NetNotepad.AuthService/.
 
+FROM prebuild AS migration
+RUN dotnet tool install --global dotnet-ef
+ENV PATH="${PATH}:/root/.dotnet/tools"
+WORKDIR /src/NetNotepad.AuthService
+ENTRYPOINT ["sh", "-c"]
+
+FROM prebuild AS build
 ARG BUILD_CONFIGURATION=Release
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     dotnet publish \

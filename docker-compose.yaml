@@ -123,11 +123,23 @@ services:
     volumes:
       - ./configs/rabbitmq-auth:/etc/rabbitmq
 
+  notepad-auth-migration:
+    build:
+      dockerfile: NetNotepad.AuthService/Dockerfile
+      target: migration
+      args:
+        BUILD_CONFIGURATION: ${DOTNET_BUILD_CONFIGURATION:-Release}
+    volumes:
+      - ./NetNotepad.AuthService/Migrations:/src/NetNotepad.AuthService/Migrations
+    command:
+      - dotnet ef migrations add Auto_$$(date +%Y%m%d_%H%M%S) --project NetNotepad.AuthService
+
   netnotepad-auth:
     labels:
       - "autoheal=true"
     build:
       dockerfile: NetNotepad.AuthService/Dockerfile
+      target: runtime
       args:
         BUILD_CONFIGURATION: ${DOTNET_BUILD_CONFIGURATION:-Release}
     <<: *dotnet
@@ -154,6 +166,8 @@ services:
       - jwt-secret-pri
       - jwt-secret-pub
     depends_on:
+      notepad-auth-migration:
+        condition: service_completed_successfully
       postgres-auth:
         condition: service_healthy
       redis-auth:
