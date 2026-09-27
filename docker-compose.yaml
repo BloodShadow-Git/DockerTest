@@ -132,7 +132,7 @@ services:
     volumes:
       - ./NetNotepad.AuthService/Migrations:/src/NetNotepad.AuthService/Migrations
     command:
-      - dotnet ef migrations add Auto_$$(date +%Y%m%d_%H%M%S) --project NetNotepad.AuthService
+      - dotnet ef migrations add Auto_$$(date +%Y%m%d_%H%M%S)
 
   netnotepad-auth:
     labels:
