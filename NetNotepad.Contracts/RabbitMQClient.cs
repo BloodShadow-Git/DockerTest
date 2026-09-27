@@ -6,7 +6,6 @@ namespace NetNotepad.Contracts
 {
     public static class RabbitMQClient
     {
-
         public static Task<IConnection> Connect(string hostVar = "RABBITMQ_HOST", string portVar = "RABBITMQ_PORT",
             string userVar = "RABBITMQ_USER", string passVar = "RABBITMQ_PASS")
         {

@@ -142,8 +142,6 @@ services:
       target: runtime
       args:
         BUILD_CONFIGURATION: ${DOTNET_BUILD_CONFIGURATION:-Release}
-    # volumes:
-    #   - ./NetNotepad.AuthService/Migrations:/src/NetNotepad.AuthService/Migrations
     <<: *dotnet
     environment:
       PORT: 8080

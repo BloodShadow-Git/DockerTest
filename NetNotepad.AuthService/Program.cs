@@ -117,26 +117,7 @@ namespace NetNotepad.AuthService
 
             Endpoints.AddEndpoints();
 
-            IResponder consumer = await HTTPRabbitMQ.ResponderBuilder().RequestQueue(HTTPAuthQueue).Handler((ctx, message) =>
-            {
-                try
-                {
-                    ServiceRequest sr = SerializeModule.Deserialize<ServiceRequest>(Encoding.UTF8.GetBytes(message.BodyAsString()));
-                    if (sr == null)
-                    {
-                        Log.Error("Service request is invalid");
-                        sr = new("", "");
-                    }
-                    if (HTTPHookRouter.Route(sr.Path, Encoding.UTF8.GetBytes(sr.Payload), out Responce? responce)) { }
-                    else { responce = new ServiceResponce(HttpStatusCode.NotFound, "NOT_FOUND"); }
-                    return Task.FromResult(ctx.Message(SerializeModule.Serialize(responce!)));
-                }
-                catch (Exception ex)
-                {
-                    Log.Fatal(ex, "Exception while get request");
-                    return Task.FromResult(ctx.Message(SerializeModule.Serialize(new ServiceResponce(HttpStatusCode.InternalServerError, "INTERNAL_ERROR"))));
-                }
-            }).BuildAsync();
+            await HTTPRabbitMQ.ResponderBuilder().RequestQueue(HTTPAuthQueue).Handler(HandleHTTPRequest).BuildAsync();
 
             await HTTPServer.Start(HandleEndpoint);
         }
@@ -176,6 +157,27 @@ namespace NetNotepad.AuthService
                     break;
             }
             context.Response.Close();
+        }
+
+        private static Task<IMessage> HandleHTTPRequest(IResponder.IContext ctx, IMessage message)
+        {
+            try
+            {
+                ServiceRequest sr = SerializeModule.Deserialize<ServiceRequest>(Encoding.UTF8.GetBytes(message.BodyAsString()));
+                if (sr == null)
+                {
+                    Log.Error("Service request is invalid");
+                    sr = new("", "");
+                }
+                if (HTTPHookRouter.Route(sr.Path, Encoding.UTF8.GetBytes(sr.Payload), out Responce? responce)) { }
+                else { responce = new ServiceResponce(HttpStatusCode.NotFound, "NOT_FOUND"); }
+                return Task.FromResult(ctx.Message(SerializeModule.Serialize(responce!)));
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Exception while get request");
+                return Task.FromResult(ctx.Message(SerializeModule.Serialize(new ServiceResponce(HttpStatusCode.InternalServerError, "INTERNAL_ERROR"))));
+            }
         }
     }
 }
