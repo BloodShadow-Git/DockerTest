@@ -114,14 +114,14 @@ services:
       RABBITMQ_DEFAULT_PASS: ${HTTP_RABBITMQ_PASS}
       RABBITMQ_DEFAULT_USER: ${HTTP_RABBITMQ_USER}
     volumes:
-      - ./configs/rabbitmq-http:/etc/rabbitmq
+      - ./configs/rabbitmq-http:/etc/rabbitmq:ro
   rabbitmq-auth:
     <<: *rabbitmq
     environment:
       RABBITMQ_DEFAULT_PASS: ${AUTH_RABBITMQ_PASS}
       RABBITMQ_DEFAULT_USER: ${AUTH_RABBITMQ_USER}
     volumes:
-      - ./configs/rabbitmq-auth:/etc/rabbitmq
+      - ./configs/rabbitmq-auth:/etc/rabbitmq:ro
 
   notepad-auth-migration:
     build:
@@ -130,7 +130,7 @@ services:
       args:
         BUILD_CONFIGURATION: ${DOTNET_BUILD_CONFIGURATION:-Release}
     volumes:
-      - auth-migrations:/src/NetNotepad.AuthService/Migrations
+      - ./NetNotepad.AuthService/Migrations:/src/NetNotepad.AuthService/Migrations
     command:
       - dotnet ef migrations add Auto_$$(date +%Y%m%d_%H%M%S)
 
@@ -143,7 +143,7 @@ services:
       args:
         BUILD_CONFIGURATION: ${DOTNET_BUILD_CONFIGURATION:-Release}
     volumes:
-      - auth-migrations:/src/NetNotepad.AuthService/Migrations
+      - ./NetNotepad.AuthService/Migrations:/src/NetNotepad.AuthService/Migrations
     <<: *dotnet
     environment:
       PORT: 8080
@@ -164,6 +164,8 @@ services:
       AUTH_RABBITMQ_PORT: ${AUTH_RABBITMQ_PORT}
       AUTH_RABBITMQ_USER: ${AUTH_RABBITMQ_USER}
       AUTH_RABBITMQ_PASS: ${AUTH_RABBITMQ_PASS}
+      EVENT_NAME: ${EVENT_NAME}
+      AUTH_EVENT_NAME: ${AUTH_EVENT_NAME}
     secrets:
       - jwt-secret-pri
       - jwt-secret-pub
@@ -225,11 +227,3 @@ secrets:
     file: ./secrets/jwt-public.pem
   jwt-secret-pri:
     file: ./secrets/jwt-private.pem
-
-volumes:
-  auth-migrations:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./NetNotepad.AuthService/Migrations

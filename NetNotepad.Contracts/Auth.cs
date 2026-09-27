@@ -1,3 +1,5 @@
+using System.Net;
+
 namespace NetNotepad.Contracts
 {
     public static class JWTNames
@@ -6,6 +8,6 @@ namespace NetNotepad.Contracts
         public static readonly string ISS = "AuthService";
         public static readonly string AUD = "Services";
     }
-    public record LoginRequest(string Login, string Password);
-    public record LoginResponce(string HttpCode, string JWT, string RefreshToken) : Responce(HttpCode);
+    public record LoginRequest(string Login, string Password, bool Persistent, string DeviceName);
+    public record LoginResponce(HttpStatusCode HttpCode, string Message, string JWT, string RefreshToken, TimeSpan Ttl) : Responce(HttpCode, Message);
 }

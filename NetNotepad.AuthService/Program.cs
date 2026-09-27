@@ -19,6 +19,7 @@ namespace NetNotepad.AuthService
         public static IDatabase RedisDB { get; private set; } = null!;
         public static IConnection HTTPRabbitMQ { get; private set; } = null!;
         public static IConnection AuthRabbitMQ { get; private set; } = null!;
+        public static RabbitMQEventHandler EventHandler { get; private set; } = null!;
 
         static async Task Main()
         {
@@ -72,6 +73,17 @@ namespace NetNotepad.AuthService
 
             try
             {
+                EventHandler = new RabbitMQEventHandler(HTTPRabbitMQ, "AUTH_EVENT_NAME", events: [Events.USER_CREATED, Events.USER_LOGIN]);
+                Log.Information("Created event handler");
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Failed to create events handler");
+                Environment.Exit(-1);
+            }
+
+            try
+            {
                 await CreateHTTPQueues();
                 Log.Information("HTTP queues created");
             }
@@ -116,13 +128,13 @@ namespace NetNotepad.AuthService
                         sr = new("", "");
                     }
                     if (HTTPHookRouter.Route(sr.Path, Encoding.UTF8.GetBytes(sr.Payload), out Responce? responce)) { }
-                    else { responce = new ServiceResponce("404", "NOT_FOUND"); }
+                    else { responce = new ServiceResponce(HttpStatusCode.NotFound, "NOT_FOUND"); }
                     return Task.FromResult(ctx.Message(SerializeModule.Serialize(responce!)));
                 }
                 catch (Exception ex)
                 {
                     Log.Fatal(ex, "Exception while get request");
-                    return Task.FromResult(ctx.Message(SerializeModule.Serialize(new ServiceResponce("500", "INTERNAL_ERROR"))));
+                    return Task.FromResult(ctx.Message(SerializeModule.Serialize(new ServiceResponce(HttpStatusCode.InternalServerError, "INTERNAL_ERROR"))));
                 }
             }).BuildAsync();
 

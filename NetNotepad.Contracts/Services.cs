@@ -1,6 +1,8 @@
+using System.Net;
+
 namespace NetNotepad.Contracts
 {
-    public record Responce(string HttpCode);
+    public record Responce(HttpStatusCode HttpCode, string Message);
     public record ServiceRequest(string Path, string Payload);
-    public record ServiceResponce(string HttpCode, string Message) : Responce(HttpCode);
+    public record ServiceResponce(HttpStatusCode HttpCode, string Message) : Responce(HttpCode, Message);
 }
