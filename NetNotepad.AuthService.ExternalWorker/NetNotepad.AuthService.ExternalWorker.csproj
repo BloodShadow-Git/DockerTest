@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\NetNotepad.ServiceBase\NetNotepad.ServiceBase.csproj" />
+    <ProjectReference Include="..\NetNotepad.AuthService\NetNotepad.AuthService.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

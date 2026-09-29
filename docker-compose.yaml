@@ -1,27 +1,6 @@
 x-common:
   restart: &restart
     restart: unless-stopped
-  healthcheck-redis: &healthcheck-redis
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 5s
-  healthcheck-postgres: &healthcheck-postgres
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-  healthcheck-rabbitmq: &healthcheck-rabbitmq
-    healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "-q", "check_port_listener", "5672" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
   dotnet-security: &dotnet-security
     cap_drop:
       - ALL
@@ -38,19 +17,53 @@ x-common:
     <<: *restart
   postgres: &postgres
     image: postgres:18.6-alpine3.24
-    <<:
-      - *restart
-      - *healthcheck-postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    <<: *restart
   redis: &redis
     image: redis:8.10.1-alpine3.23
-    <<:
-      - *restart
-      - *healthcheck-redis
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    <<: *restart
   rabbitmq: &rabbitmq
     image: rabbitmq:4.3.6-management-alpine
-    <<:
-      - *restart
-      - *healthcheck-rabbitmq
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "check_port_listener", "5672" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    <<: *restart
+  environment-auth: &environment-auth
+    environment:
+      PORT: 8080
+      POSTGRESDBHOST: ${AUTH_POSTGRES_HOST}
+      POSTGRESDBPORT: ${AUTH_POSTGRES_PORT}
+      POSTGRESDBNAME: ${AUTH_POSTGRES_NAME}
+      POSTGRESDBUSER: ${AUTH_POSTGRES_USER}
+      POSTGRESDBPASS: ${AUTH_POSTGRES_PASS}
+      HTTP_RABBITMQ_HOST: ${HTTP_RABBITMQ_HOST}
+      HTTP_RABBITMQ_PORT: ${HTTP_RABBITMQ_PORT}
+      HTTP_RABBITMQ_USER: ${HTTP_RABBITMQ_USER}
+      HTTP_RABBITMQ_PASS: ${HTTP_RABBITMQ_PASS}
+      REDISHOST: ${AUTH_REDIS_HOST}
+      REDISPORT: ${AUTH_REDIS_PORT}
+      AUTH_QUEUE_NAME: ${AUTH_QUEUE_NAME}
+      AUTH_INT_QUEUE_NAME: ${AUTH_INT_QUEUE_NAME}
+      AUTH_RABBITMQ_HOST: ${AUTH_RABBITMQ_HOST}
+      AUTH_RABBITMQ_PORT: ${AUTH_RABBITMQ_PORT}
+      AUTH_RABBITMQ_USER: ${AUTH_RABBITMQ_USER}
+      AUTH_RABBITMQ_PASS: ${AUTH_RABBITMQ_PASS}
+      EVENT_NAME: ${EVENT_NAME}
+      AUTH_EVENT_NAME: ${AUTH_EVENT_NAME}
 
 services:
   autoheal:
@@ -60,7 +73,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
-      netnotepad-auth:
+      netnotepad-auth-external:
         condition: service_healthy
       netnotepad-http:
         condition: service_healthy
@@ -76,7 +89,7 @@ services:
     depends_on:
       netnotepad-http:
         condition: service_healthy
-      netnotepad-auth:
+      netnotepad-auth-external:
         condition: service_healthy
 
   service-gateway:
@@ -125,51 +138,28 @@ services:
 
   notepad-auth-migration:
     build:
-      dockerfile: NetNotepad.AuthService/Dockerfile
+      dockerfile: Dockerfile.auth
       target: migration
-      args:
-        BUILD_CONFIGURATION: ${DOTNET_BUILD_CONFIGURATION:-Release}
     volumes:
-      - ./NetNotepad.AuthService/Migrations:/src/NetNotepad.AuthService/Migrations
+      - ./NetNotepad.AuthService/Migrations:/dest/NetNotepad.AuthService/Migrations
     command:
-      - dotnet ef migrations add Auto_$$(date +%Y%m%d_%H%M%S)
+      - cp /src/NetNotepad.AuthService/Migrations /dest/NetNotepad.AuthService/ -r
 
-  netnotepad-auth:
+  netnotepad-auth-external:
     labels:
       - "autoheal=true"
     build:
-      dockerfile: NetNotepad.AuthService/Dockerfile
-      target: runtime
+      dockerfile: Dockerfile.auth
+      target: runtime-external
       args:
         BUILD_CONFIGURATION: ${DOTNET_BUILD_CONFIGURATION:-Release}
-    <<: *dotnet
-    environment:
-      PORT: 8080
-      POSTGRESDBHOST: ${AUTH_POSTGRES_HOST}
-      POSTGRESDBPORT: ${AUTH_POSTGRES_PORT}
-      POSTGRESDBNAME: ${AUTH_POSTGRES_NAME}
-      POSTGRESDBUSER: ${AUTH_POSTGRES_USER}
-      POSTGRESDBPASS: ${AUTH_POSTGRES_PASS}
-      HTTP_RABBITMQ_HOST: ${HTTP_RABBITMQ_HOST}
-      HTTP_RABBITMQ_PORT: ${HTTP_RABBITMQ_PORT}
-      HTTP_RABBITMQ_USER: ${HTTP_RABBITMQ_USER}
-      HTTP_RABBITMQ_PASS: ${HTTP_RABBITMQ_PASS}
-      REDISHOST: ${AUTH_REDIS_HOST}
-      REDISPORT: ${AUTH_REDIS_PORT}
-      AUTH_QUEUE_NAME: ${AUTH_QUEUE_NAME}
-      AUTH_INT_QUEUE_NAME: ${AUTH_INT_QUEUE_NAME}
-      AUTH_RABBITMQ_HOST: ${AUTH_RABBITMQ_HOST}
-      AUTH_RABBITMQ_PORT: ${AUTH_RABBITMQ_PORT}
-      AUTH_RABBITMQ_USER: ${AUTH_RABBITMQ_USER}
-      AUTH_RABBITMQ_PASS: ${AUTH_RABBITMQ_PASS}
-      EVENT_NAME: ${EVENT_NAME}
-      AUTH_EVENT_NAME: ${AUTH_EVENT_NAME}
+    <<:
+      - *dotnet
+      - *environment-auth
     secrets:
       - jwt-secret-pri
       - jwt-secret-pub
     depends_on:
-      notepad-auth-migration:
-        condition: service_completed_successfully
       postgres-auth:
         condition: service_healthy
       redis-auth:
@@ -183,7 +173,7 @@ services:
     labels:
       - "autoheal=true"
     build:
-      dockerfile: NetNotepad.HttpHandler/Dockerfile
+      dockerfile: Dockerfile.http
       args:
         BUILD_CONFIGURATION: ${DOTNET_BUILD_CONFIGURATION:-Release}
     <<: *dotnet

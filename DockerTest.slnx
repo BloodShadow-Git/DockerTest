@@ -1,8 +1,7 @@
 <Solution>
+  <Project Path="NetNotepad.AuthService.ExternalWorker/NetNotepad.AuthService.ExternalWorker.csproj" />
   <Project Path="NetNotepad.AuthService/NetNotepad.AuthService.csproj" />
   <Project Path="NetNotepad.Contracts/NetNotepad.Contracts.csproj" />
   <Project Path="NetNotepad.HttpHandler/NetNotepad.HttpHandler.csproj" />
-  <Project Path="NetNotepad.MAUIClient/NetNotepad.MAUIClient.csproj" />
-  <Project Path="NetNotepad.NotepadService/NetNotepad.NotepadService.csproj" />
-  <Project Path="NetNotepad.UserService/NetNotepad.UserService.csproj" />
+  <Project Path="NetNotepad.ServiceBase/NetNotepad.ServiceBase.csproj" />
 </Solution>

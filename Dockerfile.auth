@@ -1,0 +1,44 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS prebuild
+WORKDIR /src
+COPY NetNotepad.Contracts/*.csproj NetNotepad.Contracts/
+COPY NetNotepad.ServiceBase/*.csproj NetNotepad.ServiceBase/
+COPY NetNotepad.AuthService/*.csproj NetNotepad.AuthService/
+COPY NetNotepad.AuthService.ExternalWorker/*.csproj NetNotepad.AuthService.ExternalWorker/
+
+RUN dotnet restore NetNotepad.AuthService/NetNotepad.AuthService.csproj
+
+COPY NetNotepad.Contracts/. NetNotepad.Contracts/
+COPY NetNotepad.ServiceBase/. NetNotepad.ServiceBase/
+COPY NetNotepad.AuthService/. NetNotepad.AuthService/.
+
+FROM prebuild AS migration
+WORKDIR /src/NetNotepad.AuthService
+RUN dotnet tool install --global dotnet-ef --version 10.*
+ENV PATH="${PATH}:/root/.dotnet/tools"
+RUN set +e; \
+    dotnet ef migrations has-pending-model-changes; \
+    status=$?; \
+    set -e; \
+    if [ "$status" -eq 1 ]; then \
+    dotnet ef migrations add Auto_$(date +%Y%m%d_%H%M%S) --no-build; \
+    elif [ "$status" -ne 0 ]; then \
+    exit "$status"; \
+    fi
+ENTRYPOINT ["sh", "-c"]
+
+FROM migration AS build-external
+WORKDIR /src/NetNotepad.AuthService.ExternalWorker
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish \
+    /src/NetNotepad.AuthService/NetNotepad.AuthService.ExternalWorker.csproj \
+    -c ${BUILD_CONFIGURATION} \
+    -o /app/publish \
+    /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/runtime:10.0-alpine AS runtime-external
+WORKDIR /app
+COPY --from=build-external /app/publish .
+USER app
+HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:8080/health || exit 1
+ENTRYPOINT [ "dotnet", "NetNotepad.AuthService.ExternalWorker.dll" ]

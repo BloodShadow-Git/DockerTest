@@ -5,6 +5,7 @@ using RabbitMQ.AMQP.Client;
 using RabbitMQ.AMQP.Client.Impl;
 using Serilog;
 using StackExchange.Redis;
+using NetNotepad.ServiceBase;
 
 namespace NetNotepad.HttpHandler
 {
@@ -21,7 +22,7 @@ namespace NetNotepad.HttpHandler
 
         static async Task Main()
         {
-            HTTPServer.CreateLogger(typeof(Program).Namespace);
+            BloodLog.CreateLogger(typeof(Program).Namespace);
 
             Log.Information("Start application");
 

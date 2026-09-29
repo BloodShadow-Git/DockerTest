@@ -3,16 +3,19 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace NetNotepad.AuthService
 {
+    public static class PostgresDBConnection
+    {
+        public static string DBConnString = null!;
+    }
+
     public class AppDBContext : DbContext
     {
         public DbSet<User> Users { get; set; } = null!;
         public DbSet<RefreshTokenData> RefreshTokens { get; set; } = null!;
-        public AppDBContext() => Migrate();
-        public AppDBContext(DbContextOptions options) : base(options) => Migrate();
+        public AppDBContext() { }
+        public AppDBContext(DbContextOptions options) : base(options) { }
 
-        private void Migrate() { if (!EF.IsDesignTime) { Database.Migrate(); } }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) { if (!optionsBuilder.IsConfigured) { optionsBuilder.UseNpgsql(Program.PostgresConnectString); } }
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) { if (!optionsBuilder.IsConfigured) { optionsBuilder.UseNpgsql(PostgresDBConnection.DBConnString); } }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
