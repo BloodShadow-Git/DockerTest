@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -24,7 +25,7 @@ namespace NetNotepad.ServiceBase
         public static Task<T> DeserializeAsync<T>(byte[] source) => Task.Run(() => JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(source), _settings)!);
         public static object TryDeserialize(byte[] source, params Type[] types)
         {
-            if (types.Length <= 0) { return null; }
+            if (types.Length <= 0) { return null!; }
             try
             {
                 string sourceSTR = Encoding.UTF8.GetString(source);
@@ -35,20 +36,20 @@ namespace NetNotepad.ServiceBase
 
                 foreach (var type in types)
                 {
-                    var props = type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                    PropertyInfo[] props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
                     int curr = 0;
 
-                    foreach (var prop in props) { if (jobject.ContainsKey(prop.Name)) { curr++; } }
+                    foreach (var prop in props) { if (jobject.TryGetValue(prop.Name, StringComparison.OrdinalIgnoreCase, out _)) { curr++; } }
                     if (curr > maxMatches && curr > 0)
                     {
                         maxMatches = curr;
                         first = type;
                     }
                 }
-                if (first != null) { return jobject.ToObject(first, JsonSerializer.Create(_settings)); }
+                if (first != null) { return jobject.ToObject(first, JsonSerializer.Create(_settings))!; }
             }
             catch { }
-            return null;
+            return null!;
         }
     }
 }
