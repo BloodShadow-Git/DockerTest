@@ -7,14 +7,14 @@ using RabbitMQ.AMQP.Client;
 using Serilog;
 using StackExchange.Redis;
 
-namespace NetNotepad.AuthService
+namespace NetNotepad.AuthService.ExternalWorker
 {
     public class Program
     {
         public static JWTBuilder JWTBuilder { get; private set; } = new();
         public static IQueueSpecification HTTPAuthQueue { get; private set; } = null!;
         public static IQueueSpecification InternalAuthQueue { get; private set; } = null!;
-        public static HookRouter HTTPHookRouter { get; private set; } = new();
+        public static HookRouter<Responce> HTTPHookRouter { get; private set; } = new();
 
         public static IDatabase RedisDB { get; private set; } = null!;
         public static IConnection HTTPRabbitMQ { get; private set; } = null!;
@@ -117,9 +117,7 @@ namespace NetNotepad.AuthService
             }
 
             Endpoints.AddEndpoints();
-
             await HTTPRabbitMQ.ResponderBuilder().RequestQueue(HTTPAuthQueue).Handler(HandleHTTPRequest).BuildAsync();
-
             await HTTPServer.Start(HandleEndpoint);
         }
 

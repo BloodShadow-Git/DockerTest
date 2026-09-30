@@ -1,5 +1,3 @@
-using NetNotepad.Contracts;
-
 namespace NetNotepad.ServiceBase
 {
     public class HookBuilder(string parent)
@@ -8,19 +6,19 @@ namespace NetNotepad.ServiceBase
         public string Build(string path) => _parent + path;
     }
 
-    public class HookRouter
+    public class HookRouter<T>
     {
-        public IReadOnlyDictionary<string, Func<byte[], Responce>> HooksMap => _hooksMap;
-        private Dictionary<string, Func<byte[], Responce>> _hooksMap = [];
+        public IReadOnlyDictionary<string, Func<byte[], T>> HooksMap => _hooksMap;
+        private Dictionary<string, Func<byte[], T>> _hooksMap = [];
 
-        public bool Route(string destination, byte[] args, out Responce? result)
+        public bool Route(string destination, byte[] args, out T? result)
         {
-            result = null;
-            if (!_hooksMap.TryGetValue(destination, out Func<byte[], Responce>? callback)) { return false; }
-            result = callback?.Invoke(args);
+            result = default;
+            if (!_hooksMap.TryGetValue(destination, out Func<byte[], T>? callback)) { return false; }
+            result = callback.Invoke(args);
             return true;
         }
-        public bool Add(string route, Func<byte[], Responce> callback) => _hooksMap.TryAdd(route, callback);
+        public bool Add(string route, Func<byte[], T> callback) => _hooksMap.TryAdd(route, callback);
         public bool Remove(string route) => _hooksMap.Remove(route);
     }
 }

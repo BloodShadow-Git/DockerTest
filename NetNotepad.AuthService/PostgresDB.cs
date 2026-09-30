@@ -1,13 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using NetNotepad.ServiceBase;
 
 namespace NetNotepad.AuthService
 {
-    public static class PostgresDBConnection
-    {
-        public static string DBConnString = null!;
-    }
-
     public class AppDBContext : DbContext
     {
         public DbSet<User> Users { get; set; } = null!;
@@ -19,12 +15,15 @@ namespace NetNotepad.AuthService
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<User>().HasKey(u => new { u.UserGuid });
-            modelBuilder.Entity<RefreshTokenData>().HasKey(u => new { u.RefreshToken });
+            modelBuilder.Entity<User>().HasKey(u => u.UserGuid);
+            modelBuilder.Entity<User>().HasIndex(u => u.UserGuid);
+            modelBuilder.Entity<RefreshTokenData>().HasKey(u => u.RefreshToken);
+            modelBuilder.Entity<RefreshTokenData>().HasIndex(u => u.UserGuid);
+            modelBuilder.Entity<RefreshTokenData>().HasOne<User>().WithMany().HasForeignKey(u => u.UserGuid).IsRequired().OnDelete(DeleteBehavior.Cascade);
         }
     }
 
-    public record User(Guid UserGuid, string UserName, string PasswordHash);
+    public record User(Guid UserGuid, string UserLogin, string PasswordHash);
     public record RefreshTokenData(Guid UserGuid, string RefreshToken, DateTime LastUseDate, TimeSpan Ttl, string DeviceName);
 
     public class AppDBContextFactory : IDesignTimeDbContextFactory<AppDBContext>

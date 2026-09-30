@@ -1,10 +1,10 @@
 using System.Net;
 using System.Security.Cryptography;
+using Microsoft.EntityFrameworkCore;
 using NetNotepad.Contracts;
 using NetNotepad.ServiceBase;
-using RabbitMQ.AMQP.Client.Impl;
 
-namespace NetNotepad.AuthService
+namespace NetNotepad.AuthService.ExternalWorker
 {
     public static class Endpoints
     {
@@ -21,7 +21,7 @@ namespace NetNotepad.AuthService
             LoginRequest lr = SerializeModule.Deserialize<LoginRequest>(payload);
             if (lr == null) { return new ServiceResponce(HttpStatusCode.BadRequest, "BAD_JSON_BODY"); }
             using AppDBContext db = new();
-            User? user = db.Users.Where(d => d.UserName == lr.Login).FirstOrDefault();
+            User? user = db.Users.AsNoTracking().FirstOrDefault(d => d.UserLogin == lr.Login);
             if (user == null) { return new ServiceResponce(HttpStatusCode.Unauthorized, "LOGIN_OR_PASSWORD_IS_INCORRECT"); }
             if (!BCrypt.Net.BCrypt.Verify(lr.Password, user.PasswordHash)) { return new ServiceResponce(HttpStatusCode.Unauthorized, "LOGIN_OR_PASSWORD_IS_INCORRECT"); }
             Program.EventHandler.Publish(Events.USER_LOGIN, new UserLogin(user.UserGuid));
@@ -32,13 +32,13 @@ namespace NetNotepad.AuthService
             LoginRequest lr = SerializeModule.Deserialize<LoginRequest>(payload);
             if (lr == null) { return new ServiceResponce(HttpStatusCode.BadRequest, "BAD_JSON_BODY"); }
             using AppDBContext db = new();
-            if (db.Users.Where(d => d.UserName == lr.Login).Any()) { return new ServiceResponce(HttpStatusCode.Conflict, "ACCOUNT_ALREADY_REGISTERED"); }
+            if (db.Users.AsNoTracking().Any(d => d.UserLogin == lr.Login)) { return new ServiceResponce(HttpStatusCode.Conflict, "ACCOUNT_ALREADY_REGISTERED"); }
             else
             {
                 User user = new(Guid.NewGuid(), lr.Login, BCrypt.Net.BCrypt.HashPassword(lr.Password));
                 db.Users.Add(user);
                 db.SaveChanges();
-                Program.EventHandler.Publish(Events.USER_CREATED, new UserCreated(user.UserGuid, user.UserName));
+                Program.EventHandler.Publish(Events.USER_CREATED, new UserCreated(user.UserGuid, user.UserLogin));
                 return GenerateTokens(user, db, lr);
             }
         }

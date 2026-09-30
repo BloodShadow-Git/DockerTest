@@ -27,10 +27,11 @@ RUN set +e; \
 ENTRYPOINT ["sh", "-c"]
 
 FROM migration AS build-external
-WORKDIR /src/NetNotepad.AuthService.ExternalWorker
+WORKDIR /src
+COPY NetNotepad.AuthService.ExternalWorker/. NetNotepad.AuthService.ExternalWorker/.
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish \
-    /src/NetNotepad.AuthService/NetNotepad.AuthService.ExternalWorker.csproj \
+    /src/NetNotepad.AuthService.ExternalWorker/NetNotepad.AuthService.ExternalWorker.csproj \
     -c ${BUILD_CONFIGURATION} \
     -o /app/publish \
     /p:UseAppHost=false
