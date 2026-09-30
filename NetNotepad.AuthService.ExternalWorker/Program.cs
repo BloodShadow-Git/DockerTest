@@ -12,6 +12,7 @@ namespace NetNotepad.AuthService.ExternalWorker
     public class Program
     {
         public static JWTBuilder JWTBuilder { get; private set; } = new();
+        public static JWTValidator JWTValidator { get; private set; } = new();
         public static IQueueSpecification HTTPAuthQueue { get; private set; } = null!;
         public static IQueueSpecification InternalAuthQueue { get; private set; } = null!;
         public static HookRouter<Responce> HTTPHookRouter { get; private set; } = new();
@@ -27,13 +28,15 @@ namespace NetNotepad.AuthService.ExternalWorker
 
             Log.Information("Start application");
             string privatePem = File.ReadAllText("/run/secrets/jwt-secret-pri").Trim();
-            if (!JWTKeyValidator.ValidatePems(privatePem, File.ReadAllText("/run/secrets/jwt-secret-pub").Trim()))
+            string publicPem = File.ReadAllText("/run/secrets/jwt-secret-pub").Trim();
+            if (!JWTKeyValidator.ValidatePems(privatePem, publicPem))
             {
                 Log.Fatal("Keys are invalid");
                 Environment.Exit(-1);
             }
             else { Log.Information("Keys validation succeful"); }
             JWTBuilder = JWTBuilder.SetPrivatePem(privatePem);
+            JWTValidator = JWTValidator.SetPublicPem(publicPem);
 
             try
             {

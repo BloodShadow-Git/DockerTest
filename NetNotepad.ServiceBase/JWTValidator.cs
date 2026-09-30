@@ -19,36 +19,41 @@ namespace NetNotepad.ServiceBase
             return this;
         }
 
-        public ClaimsPrincipal Validate(string token)
+        public bool Validate(string token, out ClaimsPrincipal principal)
         {
             if (string.IsNullOrEmpty(_publicPem)) { throw new Exception("Empty public key"); }
             if (string.IsNullOrEmpty(token)) { throw new Exception("Empty token"); }
+            principal = null!;
 
-            RSA rsa = RSA.Create();
-            rsa.ImportFromPem(_publicPem);
-            RsaSecurityKey key = new(rsa);
-            TokenValidationParameters parameters = new()
+            try
             {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = key,
+                RSA rsa = RSA.Create();
+                rsa.ImportFromPem(_publicPem);
+                RsaSecurityKey key = new(rsa);
+                TokenValidationParameters parameters = new()
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = key,
 
-                ValidateIssuer = true,
-                ValidIssuer = JWTNames.ISS,
+                    ValidateIssuer = true,
+                    ValidIssuer = JWTNames.ISS,
 
-                ValidateAudience = true,
-                ValidAudience = JWTNames.AUD,
+                    ValidateAudience = true,
+                    ValidAudience = JWTNames.AUD,
 
-                ValidateLifetime = true,
+                    ValidateLifetime = true,
 
-                ClockSkew = TimeSpan.Zero,
+                    ClockSkew = TimeSpan.Zero,
 
-                ValidAlgorithms = [SecurityAlgorithms.RsaSha256]
-            };
+                    ValidAlgorithms = [SecurityAlgorithms.RsaSha256]
+                };
 
-            JwtSecurityTokenHandler handler = new();
-            ClaimsPrincipal principal = handler.ValidateToken(token, parameters, out SecurityToken secToken);
-            ValidateClaims(principal);
-            return principal;
+                JwtSecurityTokenHandler handler = new();
+                principal = handler.ValidateToken(token, parameters, out SecurityToken secToken);
+                ValidateClaims(principal);
+                return true;
+            }
+            catch { return false; }
         }
 
         private static void ValidateClaims(ClaimsPrincipal principal)
