@@ -17,14 +17,14 @@ namespace NetNotepad.AuthService
         {
             modelBuilder.Entity<User>().HasKey(u => u.UserGuid);
             modelBuilder.Entity<User>().HasIndex(u => u.UserGuid);
-            modelBuilder.Entity<RefreshTokenData>().HasKey(u => u.RefreshToken);
+            modelBuilder.Entity<RefreshTokenData>().HasKey(u => u.DeviceGuid);
             modelBuilder.Entity<RefreshTokenData>().HasIndex(u => u.UserGuid);
             modelBuilder.Entity<RefreshTokenData>().HasOne<User>().WithMany().HasForeignKey(u => u.UserGuid).IsRequired().OnDelete(DeleteBehavior.Cascade);
         }
     }
 
     public record User(Guid UserGuid, string UserLogin, string PasswordHash, TimeSpan RefreshTokenTTL);
-    public record RefreshTokenData(Guid UserGuid, string RefreshToken, DateTime ExpireDate, string DeviceName, bool Persistent);
+    public record RefreshTokenData(Guid UserGuid, Guid DeviceGuid, string RefreshToken, DateTime ExpireDate, string DeviceName, bool Persistent);
 
     public class AppDBContextFactory : IDesignTimeDbContextFactory<AppDBContext>
     {

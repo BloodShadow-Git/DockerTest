@@ -36,24 +36,31 @@ namespace NetNotepad.AuthService.ExternalWorker
             db.RefreshTokens.Add(rtd);
             db.SaveChanges();
             Program.EventHandler.Publish(Events.USER_LOGIN, new UserLogin(user.UserGuid));
-            return new RegisterResponce(HttpStatusCode.OK, "CREATED",
+            return new LoginResponce(HttpStatusCode.OK, "CREATED",
                 Program.JWTBuilder.Clone().SetLifeSpan(TimeSpan.FromMinutes(10)).SetUserGuid(user.UserGuid).Build(out _),
-                rtd.RefreshToken, rtd.ExpireDate);
+                rtd.RefreshToken, rtd.DeviceGuid, rtd.ExpireDate);
         }
         private static Responce LoginLRTR(LoginRTRequest lrtr)
         {
             using AppDBContext db = new();
             RefreshTokenData? rtd = db.RefreshTokens.FirstOrDefault(d => d.RefreshToken == lrtr.RefreshToken);
-            if (rtd == null) { return new ServiceResponce(HttpStatusCode.Unauthorized, "INVALID_TOKEN"); }
+            if (rtd == null || rtd.ExpireDate <= DateTime.UtcNow)
+            {
+                if (rtd != null)
+                {
+                    db.Remove(rtd);
+                    db.SaveChanges();
+                }
+                return new ServiceResponce(HttpStatusCode.Unauthorized, "INVALID_TOKEN");
+            }
             User user = db.Users.AsNoTracking().First(d => d.UserGuid == rtd.UserGuid);
-            db.RefreshTokens.Remove(rtd);
-            rtd = GenerateTokens(user, rtd.Persistent, lrtr.DeviceName);
-            db.RefreshTokens.Add(rtd);
+            rtd = GenerateTokens(user, rtd.Persistent, lrtr.DeviceName, rtd.DeviceGuid);
+            db.RefreshTokens.Update(rtd);
             db.SaveChanges();
             Program.EventHandler.Publish(Events.USER_LOGIN, new UserLogin(user.UserGuid));
             return new LoginResponce(HttpStatusCode.OK, "CREATED",
                 Program.JWTBuilder.Clone().SetLifeSpan(TimeSpan.FromMinutes(10)).SetUserGuid(user.UserGuid).Build(out _),
-                rtd.RefreshToken, rtd.ExpireDate);
+                rtd.RefreshToken, rtd.DeviceGuid, rtd.ExpireDate);
         }
 
         private static Responce Register(byte[] payload)
@@ -72,8 +79,15 @@ namespace NetNotepad.AuthService.ExternalWorker
                 Program.EventHandler.Publish(Events.USER_CREATED, new UserCreated(user.UserGuid, user.UserLogin));
                 return new RegisterResponce(HttpStatusCode.OK, "CREATED",
                     Program.JWTBuilder.Clone().SetLifeSpan(TimeSpan.FromMinutes(10)).SetUserGuid(user.UserGuid).Build(out _),
-                    rtd.RefreshToken, rtd.ExpireDate);
+                    rtd.RefreshToken, rtd.DeviceGuid, rtd.ExpireDate);
             }
+        }
+
+        private static RefreshTokenData GenerateTokens(User user, bool persistent, string deviceName, Guid? tokenGuid = null)
+        {
+            string refreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+            TimeSpan ttl = persistent ? TimeSpan.FromDays(30) : TimeSpan.FromHours(12);
+            return new(user.UserGuid, tokenGuid ?? Guid.NewGuid(), refreshToken, DateTime.UtcNow + ttl, deviceName, persistent);
         }
 
         private static Responce RemoveUser(byte[] payload)
@@ -88,13 +102,6 @@ namespace NetNotepad.AuthService.ExternalWorker
             db.Users.Remove(user);
             db.SaveChanges();
             return new Responce(HttpStatusCode.OK, "USER_REMOVED");
-        }
-
-        private static RefreshTokenData GenerateTokens(User user, bool persistent, string deviceName)
-        {
-            string refreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
-            TimeSpan ttl = persistent ? TimeSpan.FromDays(30) : TimeSpan.FromHours(12);
-            return new(user.UserGuid, refreshToken, DateTime.UtcNow + ttl, deviceName, persistent);
         }
     }
 }
