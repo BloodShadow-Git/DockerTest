@@ -1,3 +1,4 @@
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using NetNotepad.Base;
@@ -14,35 +15,38 @@ namespace NetNotepad.Client.ViewModels
             string file = "test.txt";
             if (!FileSystem.Exists(file))
             {
-                bool result = ClearLogin(hp, file).Item1;
+                bool result = ClearLogin(hp, file);
                 if (!result) { return; }
             }
             else
             {
                 string refreshToken = FileSystem.Load<string>(file) ?? "";
-                LoginResponce? lr;
                 if (string.IsNullOrEmpty(refreshToken))
                 {
-                    (bool result, lr) = ClearLogin(hp, file);
-                    if (result) { return; }
+                    ClearLogin(hp, file);
+                    return;
                 }
                 HttpResponseMessage hrm = hp.PostAsync("/auth/login", new ByteArrayContent(SerializeModule.Serialize(new LoginRTRequest(refreshToken, "Client RT)")))).Result;
-                if (hrm.StatusCode != HttpStatusCode.OK) { return; }
-                lr = SerializeModule.Deserialize<LoginResponce>(hrm.Content.ReadAsByteArrayAsync().Result);
+                if (hrm.StatusCode != HttpStatusCode.OK)
+                {
+                    ClearLogin(hp, file);
+                    return;
+                }
+                string test = new StreamReader(hrm.Content.ReadAsStream()).ReadToEnd();
+                LoginResponce lr = SerializeModule.Deserialize<LoginResponce>(hrm.Content.ReadAsByteArrayAsync().Result);
                 if (lr == null) { return; }
                 FileSystem.Save(file, lr.RefreshToken);
             }
         }
 
-        private static (bool, LoginResponce?) ClearLogin(HttpClient hp, string file)
+        private static bool ClearLogin(HttpClient hp, string file)
         {
-            // HttpResponseMessage hrm = hp.PostAsync("/auth/login", new ByteArrayContent(SerializeModule.Serialize(new LoginRequest("bloodshadow", "password", false, "Client")))).Result;
-            HttpResponseMessage hrm = hp.PostAsync("/auth/register", new ByteArrayContent(SerializeModule.Serialize(new RegisterRequest("bloodshadow", "password", false, "Client")))).Result;
-            if (hrm.StatusCode != HttpStatusCode.OK) { return (false, null); }
+            HttpResponseMessage hrm = hp.PostAsync("/auth/login", new ByteArrayContent(SerializeModule.Serialize(new LoginRequest("bloodshadow", "password", false, "Client")))).Result;
+            if (hrm.StatusCode != HttpStatusCode.OK) { return false; }
             LoginResponce lr = SerializeModule.Deserialize<LoginResponce>(hrm.Content.ReadAsByteArrayAsync().Result);
-            if (lr == null) { return (false, null); }
+            if (lr == null) { return false; }
             FileSystem.Save(file, lr.RefreshToken);
-            return (true, lr);
+            return true;
         }
     }
 }

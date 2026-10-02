@@ -45,7 +45,7 @@ namespace NetNotepad.AuthService.ExternalWorker
         private static Responce LoginLRTR(LoginRTRequest lrtr)
         {
             using AppDBContext db = new();
-            RefreshTokenData? rtd = db.RefreshTokens.FirstOrDefault(d => d.RefreshToken == lrtr.RefreshToken);
+            RefreshTokenData? rtd = db.RefreshTokens.AsNoTracking().FirstOrDefault(d => d.RefreshToken == lrtr.RefreshToken);
             if (rtd == null || rtd.ExpireDate <= DateTime.UtcNow)
             {
                 if (rtd != null)
