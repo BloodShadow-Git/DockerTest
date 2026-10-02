@@ -2,6 +2,7 @@ using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
+using NetNotepad.Base;
 using NetNotepad.Contracts;
 using NetNotepad.ServiceBase;
 
@@ -15,6 +16,7 @@ namespace NetNotepad.AuthService.ExternalWorker
             Program.HTTPHookRouter.Add(hb.Build("/login"), Login);
             Program.HTTPHookRouter.Add(hb.Build("/register"), Register);
             Program.HTTPHookRouter.Add(hb.Build("/remove"), RemoveUser);
+            Program.HTTPHookRouter.Add(hb.Build("/logout"), Logout);
         }
 
         private static Responce Login(byte[] payload)
@@ -101,7 +103,42 @@ namespace NetNotepad.AuthService.ExternalWorker
             if (user == null) { return new ServiceResponce(HttpStatusCode.NotFound, "USER_NOT_EXISTS"); }
             db.Users.Remove(user);
             db.SaveChanges();
+            Program.EventHandler.Publish(Events.USER_REMOVED, new UserRemove(userGuid));
             return new Responce(HttpStatusCode.OK, "USER_REMOVED");
+        }
+
+        private static Responce Logout(byte[] payload)
+        {
+            return SerializeModule.TryDeserialize(payload, typeof(LogoutRequest), typeof(LogoutRTRequest)) switch
+            {
+                LogoutRequest lr => LogoutLR(lr),
+                LogoutRTRequest lrtr => LogoutLRTR(lrtr),
+                _ => new ServiceResponce(HttpStatusCode.BadRequest, "BAD_JSON_BODY"),
+            };
+        }
+        private static Responce LogoutLR(LogoutRequest lr)
+        {
+            if (!Program.JWTValidator.Validate(lr.JWT, out ClaimsPrincipal principal)) { return new ServiceResponce(HttpStatusCode.Unauthorized, "INVALID_JWT"); }
+            Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
+            using AppDBContext db = new();
+            db.RefreshTokens.Where(u => u.UserGuid == userGuid).ExecuteDelete();
+            db.SaveChanges();
+            Program.EventHandler.Publish(Events.USER_LOGOUT, new UserLogout(userGuid));
+            return new Responce(HttpStatusCode.OK, "USER_LOGOUT");
+        }
+        private static Responce LogoutLRTR(LogoutRTRequest lrtr)
+        {
+            if (!Program.JWTValidator.Validate(lrtr.JWT, out ClaimsPrincipal principal)) { return new ServiceResponce(HttpStatusCode.Unauthorized, "INVALID_JWT"); }
+            Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
+            AppDBContext db = new();
+            Guid[] tokens = [.. lrtr.RefreshTokens.Distinct()];
+            RefreshTokenData[] rtds = [.. db.RefreshTokens.Where(d => tokens.Contains(d.DeviceGuid))];
+            if (rtds.Any(d => d.UserGuid != userGuid) ||
+                rtds.Length != tokens.Length)
+            { return new Responce(HttpStatusCode.BadRequest, "NOT_ALL_TOKENS_ARE_VALID"); }
+            db.RefreshTokens.RemoveRange(rtds);
+            db.SaveChanges();
+            return new Responce(HttpStatusCode.OK, "USER_LOGOUT");
         }
     }
 }

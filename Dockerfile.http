@@ -6,6 +6,7 @@ WORKDIR /src
 
 # Copy and build all code
 COPY NetNotepad.Contracts/*.csproj NetNotepad.Contracts/
+COPY NetNotepad.Base/*.csproj NetNotepad.Base/
 COPY NetNotepad.ServiceBase/*.csproj NetNotepad.ServiceBase/
 COPY NetNotepad.HttpHandler/*.csproj NetNotepad.HttpHandler/
 
@@ -13,6 +14,7 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet restore NetNotepad.HttpHandler/NetNotepad.HttpHandler.csproj
 
 COPY NetNotepad.Contracts/. NetNotepad.Contracts/.
+COPY NetNotepad.Base/. NetNotepad.Base/
 COPY NetNotepad.ServiceBase/. NetNotepad.ServiceBase/.
 COPY NetNotepad.HttpHandler/. NetNotepad.HttpHandler/.
 

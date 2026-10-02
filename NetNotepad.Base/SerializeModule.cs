@@ -3,7 +3,7 @@ using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace NetNotepad.ServiceBase
+namespace NetNotepad.Base
 {
     public static class SerializeModule
     {

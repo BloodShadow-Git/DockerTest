@@ -6,6 +6,7 @@ using RabbitMQ.AMQP.Client.Impl;
 using Serilog;
 using StackExchange.Redis;
 using NetNotepad.ServiceBase;
+using NetNotepad.Base;
 
 namespace NetNotepad.HttpHandler
 {
@@ -98,16 +99,24 @@ namespace NetNotepad.HttpHandler
                     response.OutputStream.Write(Encoding.UTF8.GetBytes("OK"));
                     break;
                 default:
-                    if (path.StartsWith("/auth")) { await Send(AuthQueue, context, path); }
-                    else if (path.StartsWith("/user")) { await Send(UserQueue, context, path); }
-                    else if (path.StartsWith("/notepad")) { await Send(NotepadQueue, context, path); }
-                    else
+                    try
                     {
-                        Log.Information($"Not found: {path}");
-                        response.StatusCode = (int)HttpStatusCode.NotFound;
-                        break;
+                        if (path.StartsWith("/auth")) { await Send(AuthQueue, context, path); }
+                        else if (path.StartsWith("/user")) { await Send(UserQueue, context, path); }
+                        else if (path.StartsWith("/notepad")) { await Send(NotepadQueue, context, path); }
+                        else
+                        {
+                            Log.Information($"Not found: {path}");
+                            response.StatusCode = (int)HttpStatusCode.NotFound;
+                            break;
+                        }
+                        response.StatusCode = (int)HttpStatusCode.OK;
                     }
-                    response.StatusCode = (int)HttpStatusCode.OK;
+                    catch
+                    {
+                        response.StatusCode = (int)HttpStatusCode.BadRequest;
+                        response.OutputStream.Write(Encoding.UTF8.GetBytes("CONNECTION_TIMEOUT"));
+                    }
                     break;
             }
             context.Response.Close();
@@ -117,7 +126,7 @@ namespace NetNotepad.HttpHandler
         {
             IRequester requester = await RabbitMQ.RequesterBuilder().RequestAddress().Queue(queue).Requester().BuildAsync();
             IMessage message = await requester.PublishAsync(new AmqpMessage(SerializeModule.Serialize(
-                new ServiceRequest(path, new StreamReader(context.Request.InputStream).ReadToEnd())
+                new ServiceRequest(path, context.Request.HttpMethod.ToLower(), new StreamReader(context.Request.InputStream).ReadToEnd())
             )));
             await context.Response.OutputStream.WriteAsync(context.Request.ContentEncoding.GetBytes(message.BodyAsString()));
         }

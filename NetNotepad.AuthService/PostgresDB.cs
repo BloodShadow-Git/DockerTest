@@ -16,9 +16,9 @@ namespace NetNotepad.AuthService
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>().HasKey(u => u.UserGuid);
-            modelBuilder.Entity<User>().HasIndex(u => u.UserGuid);
             modelBuilder.Entity<RefreshTokenData>().HasKey(u => u.DeviceGuid);
             modelBuilder.Entity<RefreshTokenData>().HasIndex(u => u.UserGuid);
+            modelBuilder.Entity<RefreshTokenData>().HasIndex(u => u.RefreshToken).IsUnique();
             modelBuilder.Entity<RefreshTokenData>().HasOne<User>().WithMany().HasForeignKey(u => u.UserGuid).IsRequired().OnDelete(DeleteBehavior.Cascade);
         }
     }

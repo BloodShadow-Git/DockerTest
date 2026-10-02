@@ -14,5 +14,6 @@ namespace NetNotepad.Contracts
     public record RegisterRequest(string Login, string Password, bool Persistent, string DeviceName);
     public record RegisterResponce(HttpStatusCode HttpCode, string Message, string JWT, string RefreshToken, Guid DeviceGuid, DateTime ExpireDate) : Responce(HttpCode, Message);
     public record RemoveRequest(string JWT);
-    public record LogoutRequest(string JWT, params Guid[] RefreshTokens);
+    public record LogoutRequest(string JWT);
+    public record LogoutRTRequest(string JWT, params Guid[] RefreshTokens);
 }

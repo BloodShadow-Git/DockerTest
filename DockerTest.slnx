@@ -1,6 +1,12 @@
 <Solution>
+  <Folder Name="/NetNotepad.Client/">
+    <Project Path="NetNotepad.Client/NetNotepad.Client.Android/NetNotepad.Client.Android.csproj" />
+    <Project Path="NetNotepad.Client/NetNotepad.Client.Desktop/NetNotepad.Client.Desktop.csproj" />
+    <Project Path="NetNotepad.Client/NetNotepad.Client/NetNotepad.Client.csproj" />
+  </Folder>
   <Project Path="NetNotepad.AuthService.ExternalWorker/NetNotepad.AuthService.ExternalWorker.csproj" />
   <Project Path="NetNotepad.AuthService/NetNotepad.AuthService.csproj" />
+  <Project Path="NetNotepad.Base/NetNotepad.Base.csproj" />
   <Project Path="NetNotepad.Contracts/NetNotepad.Contracts.csproj" />
   <Project Path="NetNotepad.HttpHandler/NetNotepad.HttpHandler.csproj" />
   <Project Path="NetNotepad.ServiceBase/NetNotepad.ServiceBase.csproj" />

@@ -1,6 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS prebuild
 WORKDIR /src
 COPY NetNotepad.Contracts/*.csproj NetNotepad.Contracts/
+COPY NetNotepad.Base/*.csproj NetNotepad.Base/
 COPY NetNotepad.ServiceBase/*.csproj NetNotepad.ServiceBase/
 COPY NetNotepad.AuthService/*.csproj NetNotepad.AuthService/
 COPY NetNotepad.AuthService.ExternalWorker/*.csproj NetNotepad.AuthService.ExternalWorker/
@@ -8,6 +9,7 @@ COPY NetNotepad.AuthService.ExternalWorker/*.csproj NetNotepad.AuthService.Exter
 RUN dotnet restore NetNotepad.AuthService/NetNotepad.AuthService.csproj
 
 COPY NetNotepad.Contracts/. NetNotepad.Contracts/
+COPY NetNotepad.Base/. NetNotepad.Base/
 COPY NetNotepad.ServiceBase/. NetNotepad.ServiceBase/
 COPY NetNotepad.AuthService/. NetNotepad.AuthService/.
 

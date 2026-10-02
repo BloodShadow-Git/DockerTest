@@ -1,3 +1,4 @@
+using NetNotepad.Base;
 using RabbitMQ.AMQP.Client;
 using RabbitMQ.AMQP.Client.Impl;
 

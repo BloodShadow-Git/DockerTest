@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using NetNotepad.Base;
 using NetNotepad.Contracts;
 using NetNotepad.ServiceBase;
 using RabbitMQ.AMQP.Client;
@@ -77,7 +78,8 @@ namespace NetNotepad.AuthService.ExternalWorker
 
             try
             {
-                EventHandler = new RabbitMQEventHandler(HTTPRabbitMQ, "AUTH_EVENT_NAME", events: [Events.USER_CREATED, Events.USER_LOGIN]);
+                EventHandler = new RabbitMQEventHandler(HTTPRabbitMQ, "AUTH_EVENT_NAME",
+                    events: [Events.USER_CREATED, Events.USER_LOGIN, Events.USER_REMOVED, Events.USER_LOGOUT]);
                 Log.Information("Created event handler");
             }
             catch (Exception ex)
@@ -169,9 +171,9 @@ namespace NetNotepad.AuthService.ExternalWorker
                 if (sr == null)
                 {
                     Log.Error("Service request is invalid");
-                    sr = new("", "");
+                    sr = new("", "", "");
                 }
-                if (HTTPHookRouter.Route(sr.Path, Encoding.UTF8.GetBytes(sr.Payload), out Responce? responce)) { }
+                if (HTTPHookRouter.Route(sr.Path, sr.Method, Encoding.UTF8.GetBytes(sr.Payload), out Responce? responce)) { }
                 else { responce = new ServiceResponce(HttpStatusCode.NotFound, "NOT_FOUND"); }
                 return Task.FromResult(ctx.Message(SerializeModule.Serialize(responce!)));
             }
