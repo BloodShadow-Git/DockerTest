@@ -4,6 +4,7 @@ namespace NetNotepad.Base
     {
         private string? _parent = parent;
         public string Build(string path) => _parent + path;
+        public HookBuilder Add(string path) => new(_parent + path);
     }
 
     public class HookRouter<T>

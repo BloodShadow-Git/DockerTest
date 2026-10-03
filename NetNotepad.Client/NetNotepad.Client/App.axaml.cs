@@ -19,23 +19,11 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
-            desktop.MainWindow = new MainWindow
-            {
-                DataContext = new MainViewModel()
-            };
-        }
+        { desktop.MainWindow = new MainWindow { DataContext = new LoginPageModel() }; }
         else if (ApplicationLifetime is IActivityApplicationLifetime singleViewFactoryApplicationLifetime)
-        {
-            singleViewFactoryApplicationLifetime.MainViewFactory = () => new MainView { DataContext = new MainViewModel() };
-        }
+        { singleViewFactoryApplicationLifetime.MainViewFactory = () => new LoginPage { DataContext = new LoginPageModel() }; }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
-        {
-            singleViewPlatform.MainView = new MainView
-            {
-                DataContext = new MainViewModel()
-            };
-        }
+        { singleViewPlatform.MainView = new LoginPage { DataContext = new LoginPageModel() }; }
 
         base.OnFrameworkInitializationCompleted();
     }

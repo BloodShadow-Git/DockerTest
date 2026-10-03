@@ -8,5 +8,7 @@
         x:Class="NetNotepad.Client.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
         Title="NetNotepad.Client">
-        <views:MainView />
+        <NavigationPage>
+                <views:LoginPage/>
+        </NavigationPage>
 </Window>
