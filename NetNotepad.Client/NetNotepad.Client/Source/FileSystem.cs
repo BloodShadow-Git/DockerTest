@@ -7,11 +7,7 @@ namespace NetNotepad.Client.Source
     public static class FileSystem
     {
         private static string DirectoryPath =>
-            Path.Combine(
-                Environment.GetFolderPath(
-                    Environment.SpecialFolder.LocalApplicationData,
-                    Environment.SpecialFolderOption.Create),
-                "NetNotepad");
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create), "NetNotepad");
 
         public static void Save(string path, object obj)
         {

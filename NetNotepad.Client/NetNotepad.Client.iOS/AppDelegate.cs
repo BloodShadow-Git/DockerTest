@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.iOS;
 using Avalonia.Media;
+using System.Diagnostics;
 
 namespace NetNotepad.Client.iOS;
 
@@ -18,6 +19,6 @@ public partial class AppDelegate : AvaloniaAppDelegate<App>
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {
         return base.CustomizeAppBuilder(builder)
-            .WithInterFont();
+            .WithInterFont().UseR3(ex => Debug.WriteLine(ex));
     }
 }

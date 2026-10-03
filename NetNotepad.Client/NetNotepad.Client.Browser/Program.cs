@@ -1,4 +1,5 @@
-﻿using System.Runtime.Versioning;
+﻿using System.Diagnostics;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Browser;
@@ -6,10 +7,10 @@ using NetNotepad.Client;
 
 internal sealed partial class Program
 {
-    private static Task Main(string[] args) => BuildAvaloniaApp()
-            .WithInterFont()
-            .StartBrowserAppAsync("out");
+        private static Task Main(string[] args) => BuildAvaloniaApp()
+                .WithInterFont()
+                .StartBrowserAppAsync("out");
 
-    public static AppBuilder BuildAvaloniaApp()
-        => AppBuilder.Configure<App>();
+        public static AppBuilder BuildAvaloniaApp()
+            => AppBuilder.Configure<App>().UseR3(ex => Debug.WriteLine(ex));
 }

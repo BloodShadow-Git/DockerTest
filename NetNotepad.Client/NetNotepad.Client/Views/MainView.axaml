@@ -27,16 +27,20 @@
         <Border Grid.Row="1" Grid.Column="1"
                 Padding="25" CornerRadius="25"
                 Background="#7FF0FFFF">
-            <StackPanel Spacing="5">
-                <TextBox PlaceholderText="Login" AcceptsReturn="False"/>
-                <TextBox PlaceholderText="Password" AcceptsReturn="False" RevealPassword="False" PasswordChar="*" />
-                <Button Content="Enter" />
-                <ComboBox>
-                    <ComboBoxItem>http://localhost:8080</ComboBoxItem>
-                    <ComboBoxItem>http://remotehost:8080</ComboBoxItem>
-                    <ComboBoxItem>http://heh.com:8080</ComboBoxItem>
-                </ComboBox>
-            </StackPanel>
+            <ScrollViewer>
+                <StackPanel Spacing="5">
+                    <TextBox PlaceholderText="Login" AcceptsReturn="False"/>
+                    <TextBox PlaceholderText="Password" AcceptsReturn="False" RevealPassword="False" PasswordChar="*" />
+                    <Button Content="Enter" />
+                    <ComboBox SelectedIndex="0">
+                        <ComboBoxItem>http://localhost:8080</ComboBoxItem>
+                        <ComboBoxItem>http://remotehost:8080</ComboBoxItem>
+                        <ComboBoxItem>http://heh.com:8080</ComboBoxItem>
+                    </ComboBox>
+
+                    <ComboBox ItemsSource="{Binding List}" SelectedIndex="0"/>
+                </StackPanel>
+            </ScrollViewer>
         </Border>
     </Grid>
 </UserControl>

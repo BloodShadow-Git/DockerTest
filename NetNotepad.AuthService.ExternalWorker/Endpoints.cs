@@ -25,15 +25,15 @@ namespace NetNotepad.AuthService.ExternalWorker
             {
                 LoginRequest lr => LoginLR(lr),
                 LoginRTRequest lrtr => LoginLRTR(lrtr),
-                _ => new ServiceResponce(HttpStatusCode.BadRequest, "BAD_JSON_BODY"),
+                _ => ServiceExceptions.BAD_JSON_BODY,
             };
         }
         private static Responce LoginLR(LoginRequest lr)
         {
             using AppDBContext db = new();
             User? user = db.Users.AsNoTracking().FirstOrDefault(d => d.UserLogin == lr.Login);
-            if (user == null) { return new ServiceResponce(HttpStatusCode.Unauthorized, "LOGIN_OR_PASSWORD_IS_INCORRECT"); }
-            if (!BCrypt.Net.BCrypt.Verify(lr.Password, user.PasswordHash)) { return new ServiceResponce(HttpStatusCode.Unauthorized, "LOGIN_OR_PASSWORD_IS_INCORRECT"); }
+            if (user == null) { return ServiceExceptions.LOGIN_OR_PASSWORD_IS_INCORRECT; }
+            if (!BCrypt.Net.BCrypt.Verify(lr.Password, user.PasswordHash)) { return ServiceExceptions.LOGIN_OR_PASSWORD_IS_INCORRECT; }
             RefreshTokenData rtd = GenerateTokens(user, lr.Persistent, lr.DeviceName);
             db.RefreshTokens.Add(rtd);
             db.SaveChanges();
@@ -53,7 +53,7 @@ namespace NetNotepad.AuthService.ExternalWorker
                     db.Remove(rtd);
                     db.SaveChanges();
                 }
-                return new ServiceResponce(HttpStatusCode.Unauthorized, "INVALID_TOKEN");
+                return ServiceExceptions.INVALID_TOKEN;
             }
             User user = db.Users.AsNoTracking().First(d => d.UserGuid == rtd.UserGuid);
             rtd = GenerateTokens(user, rtd.Persistent, lrtr.DeviceName, rtd.DeviceGuid);
@@ -68,9 +68,9 @@ namespace NetNotepad.AuthService.ExternalWorker
         private static Responce Register(byte[] payload)
         {
             RegisterRequest rr = SerializeModule.Deserialize<RegisterRequest>(payload);
-            if (rr == null) { return new ServiceResponce(HttpStatusCode.BadRequest, "BAD_JSON_BODY"); }
+            if (rr == null) { return ServiceExceptions.BAD_JSON_BODY; }
             using AppDBContext db = new();
-            if (db.Users.AsNoTracking().Any(d => d.UserLogin == rr.Login)) { return new ServiceResponce(HttpStatusCode.Conflict, "ACCOUNT_ALREADY_REGISTERED"); }
+            if (db.Users.AsNoTracking().Any(d => d.UserLogin == rr.Login)) { return ServiceExceptions.ACCOUNT_ALREADY_REGISTERED; }
             else
             {
                 User user = new(Guid.NewGuid(), rr.Login, BCrypt.Net.BCrypt.HashPassword(rr.Password), TimeSpan.FromDays(30));
@@ -95,12 +95,12 @@ namespace NetNotepad.AuthService.ExternalWorker
         private static Responce RemoveUser(byte[] payload)
         {
             RemoveRequest rr = SerializeModule.Deserialize<RemoveRequest>(payload);
-            if (rr == null) { return new ServiceResponce(HttpStatusCode.BadRequest, "BAD_JSON_BODY"); }
-            if (!Program.JWTValidator.Validate(rr.JWT, out ClaimsPrincipal principal)) { return new ServiceResponce(HttpStatusCode.Unauthorized, "INVALID_JWT"); }
+            if (rr == null) { return ServiceExceptions.BAD_JSON_BODY; }
+            if (!Program.JWTValidator.Validate(rr.JWT, out ClaimsPrincipal principal)) { return ServiceExceptions.INVALID_JWT; }
             Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
             using AppDBContext db = new();
             User? user = db.Users.AsNoTracking().FirstOrDefault(d => d.UserGuid == userGuid);
-            if (user == null) { return new ServiceResponce(HttpStatusCode.NotFound, "USER_NOT_EXISTS"); }
+            if (user == null) { return ServiceExceptions.USER_NOT_EXISTS; }
             db.Users.Remove(user);
             db.SaveChanges();
             Program.EventHandler.Publish(Events.USER_REMOVED, new UserRemove(userGuid));
@@ -113,12 +113,12 @@ namespace NetNotepad.AuthService.ExternalWorker
             {
                 LogoutRequest lr => LogoutLR(lr),
                 LogoutRTRequest lrtr => LogoutLRTR(lrtr),
-                _ => new ServiceResponce(HttpStatusCode.BadRequest, "BAD_JSON_BODY"),
+                _ => ServiceExceptions.BAD_JSON_BODY,
             };
         }
         private static Responce LogoutLR(LogoutRequest lr)
         {
-            if (!Program.JWTValidator.Validate(lr.JWT, out ClaimsPrincipal principal)) { return new ServiceResponce(HttpStatusCode.Unauthorized, "INVALID_JWT"); }
+            if (!Program.JWTValidator.Validate(lr.JWT, out ClaimsPrincipal principal)) { return ServiceExceptions.INVALID_JWT; }
             Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
             using AppDBContext db = new();
             db.RefreshTokens.Where(u => u.UserGuid == userGuid).ExecuteDelete();
@@ -128,14 +128,13 @@ namespace NetNotepad.AuthService.ExternalWorker
         }
         private static Responce LogoutLRTR(LogoutRTRequest lrtr)
         {
-            if (!Program.JWTValidator.Validate(lrtr.JWT, out ClaimsPrincipal principal)) { return new ServiceResponce(HttpStatusCode.Unauthorized, "INVALID_JWT"); }
+            if (!Program.JWTValidator.Validate(lrtr.JWT, out ClaimsPrincipal principal)) { return ServiceExceptions.INVALID_JWT; }
             Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
             AppDBContext db = new();
             Guid[] tokens = [.. lrtr.RefreshTokens.Distinct()];
             RefreshTokenData[] rtds = [.. db.RefreshTokens.Where(d => tokens.Contains(d.DeviceGuid))];
             if (rtds.Any(d => d.UserGuid != userGuid) ||
-                rtds.Length != tokens.Length)
-            { return new Responce(HttpStatusCode.BadRequest, "NOT_ALL_TOKENS_ARE_VALID"); }
+                rtds.Length != tokens.Length) { return ServiceExceptions.NOT_ALL_TOKENS_ARE_VALID; }
             db.RefreshTokens.RemoveRange(rtds);
             db.SaveChanges();
             return new Responce(HttpStatusCode.OK, "USER_LOGOUT");

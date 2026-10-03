@@ -19,6 +19,7 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="ObservableCollections.R3" />
+    <PackageReference Include="R3Extensions.Avalonia" />
   </ItemGroup>
 
   <ItemGroup>

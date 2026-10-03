@@ -14,6 +14,8 @@
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Wayland" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
+    <PackageReference Include="Tmds.DBus" />
   </ItemGroup>
 
   <ItemGroup>

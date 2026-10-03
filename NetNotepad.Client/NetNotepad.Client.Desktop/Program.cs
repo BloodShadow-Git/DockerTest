@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using Avalonia;
+using NetNotepad.Client.Source;
 
 namespace NetNotepad.Client.Desktop;
 
@@ -20,8 +22,11 @@ sealed class Program
         if (OperatingSystem.IsLinux() &&
             Environment.GetEnvironmentVariable("WAYLAND_DISPLAY") is not null) { ab.UseWayland(); }
 
-        ab.WithInterFont()
-          .LogToTrace();
+        ab.WithInterFont().LogToTrace().UseR3(ex => Debug.WriteLine(ex));
+
+        if (OperatingSystem.IsWindows()) { TokenStore.Instance = new WindowsTokenStore(); }
+        else if (OperatingSystem.IsLinux()) { TokenStore.Instance = new LinuxTokenStore(); }
+
         return ab;
     }
 }
