@@ -1,5 +1,9 @@
 using System;
 using System.Windows.Input;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Notifications;
+using NetNotepad.Client.Views;
 using ObservableCollections;
 using R3;
 
@@ -48,6 +52,7 @@ namespace NetNotepad.Client.ViewModels
             {
                 Console.WriteLine("Enter\nLogin: {0}\nPassword: {1}\nRemember: {2}\nHost: {3}\nUser: {4}",
                     Login.CurrentValue, Password.CurrentValue, Remember.CurrentValue, _hosts[HostIndex.CurrentValue], _userLogins[UserLoginIndex.CurrentValue]);
+                MainWindow.NM.Show(new Notification("File saved", "Your document has been saved successfully.", NotificationType.Success, TimeSpan.FromSeconds(3)));
             });
             _registerCommand.Subscribe(_ =>
             {
