@@ -19,34 +19,35 @@
             <RowDefinition Height="2*" />
             <RowDefinition Height="1*" />
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*" />
-            <ColumnDefinition Width="2*" />
-            <ColumnDefinition Width="1*" MinWidth="150" />
-        </Grid.ColumnDefinitions>
-
-        <Border Grid.Row="1" Grid.Column="1"
-                Padding="25" CornerRadius="25" Background="{DynamicResource MenuFlyoutItemBackgroundPressed}">
-            <ScrollViewer>
-                <StackPanel Spacing="5">
-                    <TextBox PlaceholderText="{Binding LoginKey.Value}" AcceptsReturn="False" Text="{Binding Login.Value}" />
-                    <TextBox PlaceholderText="{Binding PasswordKey.Value}" AcceptsReturn="False" RevealPassword="False" PasswordChar="*" Text="{Binding Password.Value}" >
-                        <TextBox.KeyBindings>
-                            <KeyBinding Command="{Binding LoginCoomand}" Gesture="Enter"/>
-                        </TextBox.KeyBindings>
-                    </TextBox>
-                    <ToggleButton Content="{Binding RememberMeKey.Value}" IsChecked="{Binding Remember.Value}" />
-                    <Button Content="{Binding EnterKey.Value}" Command="{Binding LoginCoomand}" />
-                    <ComboBox SelectedIndex="{Binding HostIndex.Value}" ItemsSource="{Binding Hosts}" HorizontalAlignment="Right"/>
-                    <ComboBox SelectedIndex="{Binding UserLoginIndex.Value}" ItemsSource="{Binding UserLogins}" HorizontalAlignment="Right"/>
-                </StackPanel>
-            </ScrollViewer>
-        </Border>
-        <StackPanel Grid.Row="2" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="25" Spacing="15">
+        <StackPanel Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="25" Spacing="15">
             <ComboBox SelectedIndex="{Binding LanguagesIndex.Value}" ItemsSource="{Binding Languages}"/>
             <Button Content="{Binding RegisterKey.Value}" Command="{Binding RegisterCoomand}" HorizontalAlignment="Right"/>
         </StackPanel>
-        <ToggleButton Grid.Row="0" Grid.Column="2"
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="2*" MinWidth="300" />
+                <ColumnDefinition Width="1*" />
+            </Grid.ColumnDefinitions>
+            <Border Grid.Column="1"
+                    Padding="25" CornerRadius="25" Background="{DynamicResource MenuFlyoutItemBackgroundPressed}">
+                <ScrollViewer>
+                    <StackPanel Spacing="5">
+                        <TextBox PlaceholderText="{Binding LoginKey.Value}" AcceptsReturn="False" Text="{Binding Login.Value}" />
+                        <TextBox PlaceholderText="{Binding PasswordKey.Value}" AcceptsReturn="False" RevealPassword="False" PasswordChar="*" Text="{Binding Password.Value}" >
+                            <TextBox.KeyBindings>
+                                <KeyBinding Command="{Binding LoginCoomand}" Gesture="Enter"/>
+                            </TextBox.KeyBindings>
+                        </TextBox>
+                        <ToggleButton Content="{Binding RememberMeKey.Value}" IsChecked="{Binding Remember.Value}" />
+                        <Button Content="{Binding EnterKey.Value}" Command="{Binding LoginCoomand}" />
+                        <ComboBox SelectedIndex="{Binding HostIndex.Value}" ItemsSource="{Binding Hosts}" HorizontalAlignment="Right"/>
+                        <ComboBox SelectedIndex="{Binding UserLoginIndex.Value}" ItemsSource="{Binding UserLogins}" HorizontalAlignment="Right"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+        <ToggleButton Grid.Row="0"
                       HorizontalAlignment="Right" VerticalAlignment="Top" Margin="25" MaxHeight="50" MinHeight="50" MaxWidth="50" MinWidth="50">
             <ToggleButton.Styles>
                 <Style Selector="ToggleButton[IsChecked=true]">
