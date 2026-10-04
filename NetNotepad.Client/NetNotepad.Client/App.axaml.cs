@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using NetNotepad.Client.Source;
 using NetNotepad.Client.ViewModels;
 using NetNotepad.Client.Views;
 
@@ -10,6 +11,7 @@ public partial class App : Application
 {
     public override void Initialize()
     {
+        Settings.Init();
         AvaloniaXamlLoader.Load(this);
 #if DEBUG
         this.AttachDeveloperTools();

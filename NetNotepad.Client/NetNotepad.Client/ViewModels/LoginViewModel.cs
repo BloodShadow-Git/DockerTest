@@ -15,19 +15,26 @@ namespace NetNotepad.Client.ViewModels
         public BindableReactiveProperty<int> UserLoginIndex { get; } = new();
         public IReadOnlyObservableList<string> UserLogins => _userLogins;
         public ICommand LoginCoomand => _loginCommand;
+        public ICommand RegisterCoomand => _registerCommand;
+        public BindableReactiveProperty<int> LanguagesIndex { get; } = new();
+        public IReadOnlyObservableList<string> Languages => _languages;
 
         public IReadOnlyBindableReactiveProperty<string> LoginKey => _loginKey;
         public IReadOnlyBindableReactiveProperty<string> PasswordKey => _passwordKey;
         public IReadOnlyBindableReactiveProperty<string> RememberMeKey => _rememberMeKey;
         public IReadOnlyBindableReactiveProperty<string> EnterKey => _enterKey;
+        public IReadOnlyBindableReactiveProperty<string> RegisterKey => _registerKey;
         public BindableReactiveProperty<string> _loginKey = new();
         public BindableReactiveProperty<string> _passwordKey = new();
         public BindableReactiveProperty<string> _rememberMeKey = new();
         public BindableReactiveProperty<string> _enterKey = new();
+        public BindableReactiveProperty<string> _registerKey = new();
 
         private ObservableList<string> _hosts = ["http://localhost:8080", "http://192.168.0.100:8080"];
         private ObservableList<string> _userLogins = ["bloodshadow", "blood-shadow"];
+        private ObservableList<string> _languages = ["Russian", "English"];
         private ReactiveCommand<Unit> _loginCommand = new();
+        private ReactiveCommand<Unit> _registerCommand = new();
 
         public LoginPageModel()
         {
@@ -35,10 +42,16 @@ namespace NetNotepad.Client.ViewModels
             _passwordKey.Value = "password";
             _rememberMeKey.Value = "rememberMe";
             _enterKey.Value = "enter";
+            _registerKey.Value = "register";
 
             _loginCommand.Subscribe(_ =>
             {
                 Console.WriteLine("Enter\nLogin: {0}\nPassword: {1}\nRemember: {2}\nHost: {3}\nUser: {4}",
+                    Login.CurrentValue, Password.CurrentValue, Remember.CurrentValue, _hosts[HostIndex.CurrentValue], _userLogins[UserLoginIndex.CurrentValue]);
+            });
+            _registerCommand.Subscribe(_ =>
+            {
+                Console.WriteLine("Register\nLogin: {0}\nPassword: {1}\nRemember: {2}\nHost: {3}\nUser: {4}",
                     Login.CurrentValue, Password.CurrentValue, Remember.CurrentValue, _hosts[HostIndex.CurrentValue], _userLogins[UserLoginIndex.CurrentValue]);
             });
         }
@@ -50,5 +63,6 @@ namespace NetNotepad.Client.ViewModels
         public const string PASSWORD_KEY = nameof(PASSWORD_KEY);
         public const string REMEMBER_ME_KEY = nameof(REMEMBER_ME_KEY);
         public const string ENTER_KEY = nameof(ENTER_KEY);
+        public const string REGISTER_KEY = nameof(REGISTER_KEY);
     }
 }

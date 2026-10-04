@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+<ContentPage xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -22,14 +22,11 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1*" />
             <ColumnDefinition Width="2*" />
-            <ColumnDefinition Width="1*" />
+            <ColumnDefinition Width="1*" MinWidth="150" />
         </Grid.ColumnDefinitions>
 
         <Border Grid.Row="1" Grid.Column="1"
-                Padding="25" CornerRadius="25">
-            <Border.Background>
-                <SolidColorBrush Color="{DynamicResource MenuFlyoutItemBackgroundPressed}" Opacity="1.5"/>
-            </Border.Background>
+                Padding="25" CornerRadius="25" Background="{DynamicResource MenuFlyoutItemBackgroundPressed}">
             <ScrollViewer>
                 <StackPanel Spacing="5">
                     <TextBox PlaceholderText="{Binding LoginKey.Value}" AcceptsReturn="False" Text="{Binding Login.Value}" />
@@ -45,16 +42,32 @@
                 </StackPanel>
             </ScrollViewer>
         </Border>
+        <StackPanel Grid.Row="2" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="25" Spacing="15">
+            <ComboBox SelectedIndex="{Binding LanguagesIndex.Value}" ItemsSource="{Binding Languages}"/>
+            <Button Content="{Binding RegisterKey.Value}" Command="{Binding RegisterCoomand}" HorizontalAlignment="Right"/>
+        </StackPanel>
         <ToggleButton Grid.Row="0" Grid.Column="2"
-                      HorizontalAlignment="Right" VerticalAlignment="Top" Margin="25">
+                      HorizontalAlignment="Right" VerticalAlignment="Top" Margin="25" MaxHeight="50" MinHeight="50" MaxWidth="50" MinWidth="50">
             <ToggleButton.Styles>
                 <Style Selector="ToggleButton[IsChecked=true]">
-                    <Setter Property="Content" Value="L" />
+                    <Setter Property="Content" >
+                        <Setter.Value>
+                            <Template>
+                                <Image Source="/Assets/sun.png" Stretch="UniformToFill" />
+                            </Template>
+                        </Setter.Value>
+                    </Setter>
                 </Style>
                 <Style Selector="ToggleButton[IsChecked=false]">
-                    <Setter Property="Content" Value="D" />
+                    <Setter Property="Content" >
+                        <Setter.Value>
+                            <Template>
+                                <Image Source="/Assets/moon.png" Stretch="UniformToFill" />
+                            </Template>
+                        </Setter.Value>
+                    </Setter>
                 </Style>
             </ToggleButton.Styles>
         </ToggleButton>
     </Grid>
-</UserControl>
+</ContentPage>
