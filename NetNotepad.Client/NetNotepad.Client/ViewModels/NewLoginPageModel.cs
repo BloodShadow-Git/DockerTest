@@ -1,15 +1,15 @@
 using System;
 using System.Windows.Input;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
+using Avalonia.Styling;
 using NetNotepad.Client.Views;
 using ObservableCollections;
 using R3;
 
 namespace NetNotepad.Client.ViewModels
 {
-    public partial class LoginPageModel : ViewModelBase
+    public partial class NewLoginPageModel : ViewModelBase
     {
         public BindableReactiveProperty<string> Login { get; } = new();
         public BindableReactiveProperty<string> Password { get; } = new();
@@ -22,6 +22,7 @@ namespace NetNotepad.Client.ViewModels
         public ICommand RegisterCoomand => _registerCommand;
         public BindableReactiveProperty<int> LanguagesIndex { get; } = new();
         public IReadOnlyObservableList<string> Languages => _languages;
+        public BindableReactiveProperty<bool> ThemeSwitch { get; } = new();
 
         public IReadOnlyBindableReactiveProperty<string> LoginKey => _loginKey;
         public IReadOnlyBindableReactiveProperty<string> PasswordKey => _passwordKey;
@@ -40,7 +41,7 @@ namespace NetNotepad.Client.ViewModels
         private ReactiveCommand<Unit> _loginCommand = new();
         private ReactiveCommand<Unit> _registerCommand = new();
 
-        public LoginPageModel()
+        public NewLoginPageModel()
         {
             _loginKey.Value = "login";
             _passwordKey.Value = "password";
@@ -58,6 +59,11 @@ namespace NetNotepad.Client.ViewModels
             {
                 Console.WriteLine("Register\nLogin: {0}\nPassword: {1}\nRemember: {2}\nHost: {3}\nUser: {4}",
                     Login.CurrentValue, Password.CurrentValue, Remember.CurrentValue, _hosts[HostIndex.CurrentValue], _userLogins[UserLoginIndex.CurrentValue]);
+            });
+            ThemeSwitch.Subscribe(_ =>
+            {
+                if (ThemeSwitch.CurrentValue) { Application.Current!.RequestedThemeVariant = ThemeVariant.Light; }
+                else { Application.Current!.RequestedThemeVariant = ThemeVariant.Dark; }
             });
         }
     }

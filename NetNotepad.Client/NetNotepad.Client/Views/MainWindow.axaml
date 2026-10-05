@@ -2,7 +2,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:system="using:System"
         xmlns:views="using:NetNotepad.Client.Views"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="NetNotepad.Client.Views.MainWindow"
@@ -10,10 +9,10 @@
         Title="NetNotepad.Client">
         <Panel>
                 <NavigationPage>
-                        <views:LoginPage/>
+                        <views:NewLoginPage/>
                 </NavigationPage>
                 <WindowNotificationManager x:Name="NotificationManager"
                                            Position="TopCenter"
-                                           MaxItems="5" />
+                                           MaxItems="3" HorizontalAlignment="Center"/>
         </Panel>
 </Window>

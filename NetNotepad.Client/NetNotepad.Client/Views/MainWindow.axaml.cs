@@ -5,7 +5,7 @@ namespace NetNotepad.Client.Views;
 
 public partial class MainWindow : Window
 {
-    public static WindowNotificationManager NM { get; private set; }
+    public static WindowNotificationManager NM { get; private set; } = null!;
 
     public MainWindow()
     {

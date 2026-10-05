@@ -21,11 +21,11 @@ public partial class App : Application
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        { desktop.MainWindow = new MainWindow { DataContext = new LoginPageModel() }; }
+        { desktop.MainWindow = new MainWindow { DataContext = new NewLoginPageModel() }; }
         else if (ApplicationLifetime is IActivityApplicationLifetime singleViewFactoryApplicationLifetime)
-        { singleViewFactoryApplicationLifetime.MainViewFactory = () => new LoginPage { DataContext = new LoginPageModel() }; }
+        { singleViewFactoryApplicationLifetime.MainViewFactory = () => new NewLoginPage { DataContext = new NewLoginPageModel() }; }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
-        { singleViewPlatform.MainView = new LoginPage { DataContext = new LoginPageModel() }; }
+        { singleViewPlatform.MainView = new NewLoginPage { DataContext = new NewLoginPageModel() }; }
 
         base.OnFrameworkInitializationCompleted();
     }

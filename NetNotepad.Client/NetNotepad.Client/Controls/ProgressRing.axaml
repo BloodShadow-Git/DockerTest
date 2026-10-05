@@ -1,0 +1,35 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="NetNotepad.Client.Controls.ProgressRing"
+             Width="40" Height="40">
+
+    <UserControl.Styles>
+        <Style Selector="Arc.spin">
+            <Style.Animations>
+                <Animation Duration="0:0:1" IterationCount="Infinite">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="RotateTransform.Angle" Value="0"/>
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="RotateTransform.Angle" Value="360"/>
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+    </UserControl.Styles>
+
+    <Panel>
+        <Ellipse x:Name="Track" StrokeThickness="4"/>
+
+        <Arc x:Name="ValueArc"
+             StrokeThickness="4"
+             StrokeLineCap="Round"
+             StartAngle="-90"
+             SweepAngle="0"
+             RenderTransformOrigin="50%,50%">
+            <Arc.RenderTransform>
+                <RotateTransform/>
+            </Arc.RenderTransform>
+        </Arc>
+    </Panel>
+</UserControl>

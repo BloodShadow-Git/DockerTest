@@ -1,16 +1,17 @@
 <ContentPage xmlns="https://github.com/avaloniaui"
+             xmlns:controls="using:NetNotepad.Client.Controls"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:NetNotepad.Client.ViewModels"
              mc:Ignorable="d" d:DesignWidth="1920" d:DesignHeight="1080"
-             x:Class="NetNotepad.Client.Views.LoginPage"
-             x:DataType="vm:LoginPageModel"
+             x:Class="NetNotepad.Client.Views.NewLoginPage"
+             x:DataType="vm:NewLoginPageModel"
              NavigationPage.HasNavigationBar="False">
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
         to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:LoginPageModel />
+        <vm:NewLoginPageModel />
     </Design.DataContext>
 
     <Grid>
@@ -43,32 +44,28 @@
                         <Button Content="{Binding EnterKey.Value}" Command="{Binding LoginCoomand}" />
                         <ComboBox SelectedIndex="{Binding HostIndex.Value}" ItemsSource="{Binding Hosts}" HorizontalAlignment="Right"/>
                         <ComboBox SelectedIndex="{Binding UserLoginIndex.Value}" ItemsSource="{Binding UserLogins}" HorizontalAlignment="Right"/>
+                        <controls:ProgressRing IsIndeterminate="True"
+                                               Width="80"
+                                               Height="80"
+                                               Foreground="DeepSkyBlue" />
+
                     </StackPanel>
                 </ScrollViewer>
             </Border>
         </Grid>
-        <ToggleButton Grid.Row="0"
-                      HorizontalAlignment="Right" VerticalAlignment="Top" Margin="25" MaxHeight="50" MinHeight="50" MaxWidth="50" MinWidth="50">
-            <ToggleButton.Styles>
-                <Style Selector="ToggleButton[IsChecked=true]">
-                    <Setter Property="Content" >
-                        <Setter.Value>
-                            <Template>
-                                <Image Source="/Assets/sun.png" Stretch="UniformToFill" />
-                            </Template>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-                <Style Selector="ToggleButton[IsChecked=false]">
-                    <Setter Property="Content" >
-                        <Setter.Value>
-                            <Template>
-                                <Image Source="/Assets/moon.png" Stretch="UniformToFill" />
-                            </Template>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-            </ToggleButton.Styles>
+        <ToggleButton Grid.Row="0" IsChecked="{Binding ThemeSwitch.Value}"
+                      HorizontalAlignment="Right" VerticalAlignment="Top" Margin="25">
+            <Image Stretch="UniformToFill" Width="32"
+                   MinHeight="{Binding $self.Width}" MaxHeight="{Binding $self.Width}" MinWidth="{Binding $self.Width}" MaxWidth="{Binding $self.Width}">
+                <Image.Styles>
+                    <Style Selector="ToggleButton[IsChecked=true] Image">
+                        <Setter Property="Source" Value="/Assets/sun.png" />
+                    </Style>
+                    <Style Selector="ToggleButton[IsChecked=false] Image">
+                        <Setter Property="Source" Value="/Assets/moon.png"/>
+                    </Style>
+                </Image.Styles>
+            </Image>
         </ToggleButton>
     </Grid>
 </ContentPage>
