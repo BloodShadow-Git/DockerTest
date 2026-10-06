@@ -122,6 +122,8 @@ namespace NetNotepad.AuthService.ExternalWorker
             }
 
             Endpoints.AddEndpoints();
+            Log.Information("Hook map:\n{0}", string.Join('\n', HTTPHookRouter.HooksMap.Select(x => string.Format("{0} - {1}", x.Key.Item1, x.Key.Item2?.ToString() ?? "null"))));
+
             await HTTPRabbitMQ.ResponderBuilder().RequestQueue(HTTPAuthQueue).Handler(HandleHTTPRequest).BuildAsync();
             await HTTPServer.Start(HandleEndpoint);
         }
@@ -171,8 +173,9 @@ namespace NetNotepad.AuthService.ExternalWorker
                 if (sr == null)
                 {
                     Log.Error("Service request is invalid");
-                    sr = new("", "", "");
+                    sr = new("", HttpMethod.Trace, "");
                 }
+                Log.Information("Request {0} with {1}", sr.Path, sr.Method);
                 if (HTTPHookRouter.Route(sr.Path, sr.Method, Encoding.UTF8.GetBytes(sr.Payload), out Responce? responce)) { }
                 else { responce = new ServiceResponce(HttpStatusCode.NotFound, "NOT_FOUND"); }
                 return Task.FromResult(ctx.Message(SerializeModule.Serialize(responce!)));

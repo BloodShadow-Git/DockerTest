@@ -16,4 +16,8 @@ namespace NetNotepad.Contracts
     public record RemoveRequest(string JWT);
     public record LogoutRequest(string JWT);
     public record LogoutRTRequest(string JWT, params Guid[] RefreshTokens);
+    public record UpdatePassRequest(string JWT, string OldPassword, string NewPassword);
+    public record UpdateRTRequest(string JWT, string Password, TimeSpan NewRefreshTokenTTL);
+    public record UserGetRequest(string JWT);
+    public record UserGetResponce(HttpStatusCode HttpCode, string Message, Guid UserGuid, string UserLogin, TimeSpan RefreshTokenTTL) : Responce(HttpCode, Message);
 }

@@ -1,8 +1,6 @@
-using NetNotepad.Base;
-
-namespace NetNotepad.Client.Source
+namespace NetNotepad.Base
 {
-    public static class Endpoints
+    public static class EndpointsContract
     {
         private static HookBuilder _hb = new("/");
 
@@ -11,6 +9,7 @@ namespace NetNotepad.Client.Source
         public static string Register => _auth.Build("/register");
         public static string Remove => _auth.Build("/remove");
         public static string Logout => _auth.Build("/logout");
+        public static string User => _auth.Build("/user");
 
         private static HookBuilder _user = _hb.Add("user");
 

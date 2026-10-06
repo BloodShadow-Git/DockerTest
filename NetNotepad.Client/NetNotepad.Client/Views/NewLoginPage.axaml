@@ -44,10 +44,41 @@
                         <Button Content="{Binding EnterKey.Value}" Command="{Binding LoginCoomand}" />
                         <ComboBox SelectedIndex="{Binding HostIndex.Value}" ItemsSource="{Binding Hosts}" HorizontalAlignment="Right"/>
                         <ComboBox SelectedIndex="{Binding UserLoginIndex.Value}" ItemsSource="{Binding UserLogins}" HorizontalAlignment="Right"/>
-                        <controls:ProgressRing IsIndeterminate="True"
+                        <!-- <controls:ProgressRing IsIndeterminate="True"
+                        Width="80"
+                        Height="80"
+                        Foreground="DeepSkyBlue" /> -->
+                        <controls:ProgressRing Value=".5" Maximum="1" Minimum="0"
                                                Width="80"
                                                Height="80"
-                                               Foreground="DeepSkyBlue" />
+                                               Foreground="DeepSkyBlue">
+                            <controls:ProgressRing.Styles>
+                                <Style Selector="controls|ProgressRing">
+                                    <Style.Animations>
+                                        <Animation Duration="0:0:1" IterationCount="Infinite">
+                                            <KeyFrame Cue="0%">
+                                                <Setter Property="Value" Value="0"/>
+                                            </KeyFrame>
+                                            <KeyFrame Cue="100%">
+                                                <Setter Property="Value" Value="1"/>
+                                            </KeyFrame>
+                                        </Animation>
+                                    </Style.Animations>
+                                </Style>
+                                <Style Selector="controls|ProgressRing > Arc.spin">
+                                    <Style.Animations>
+                                        <Animation Duration="0:0:1" IterationCount="Infinite">
+                                            <KeyFrame Cue="0%">
+                                                <Setter Property="RotateTransform.Angle" Value="0"/>
+                                            </KeyFrame>
+                                            <KeyFrame Cue="100%">
+                                                <Setter Property="RotateTransform.Angle" Value="360"/>
+                                            </KeyFrame>
+                                        </Animation>
+                                    </Style.Animations>
+                                </Style>
+                            </controls:ProgressRing.Styles>
+                        </controls:ProgressRing>
 
                     </StackPanel>
                 </ScrollViewer>

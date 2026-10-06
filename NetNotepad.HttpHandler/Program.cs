@@ -126,7 +126,7 @@ namespace NetNotepad.HttpHandler
         {
             IRequester requester = await RabbitMQ.RequesterBuilder().RequestAddress().Queue(queue).Requester().BuildAsync();
             IMessage message = await requester.PublishAsync(new AmqpMessage(SerializeModule.Serialize(
-                new ServiceRequest(path, context.Request.HttpMethod.ToLower(), new StreamReader(context.Request.InputStream).ReadToEnd())
+                new ServiceRequest(path, new(context.Request.HttpMethod), new StreamReader(context.Request.InputStream).ReadToEnd())
             )));
             await context.Response.OutputStream.WriteAsync(context.Request.ContentEncoding.GetBytes(message.BodyAsString()));
         }

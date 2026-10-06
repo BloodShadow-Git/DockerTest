@@ -12,11 +12,12 @@ namespace NetNotepad.AuthService.ExternalWorker
     {
         public static void AddEndpoints()
         {
-            HookBuilder hb = new("/auth");
-            Program.HTTPHookRouter.Add(hb.Build("/login"), Login);
-            Program.HTTPHookRouter.Add(hb.Build("/register"), Register);
-            Program.HTTPHookRouter.Add(hb.Build("/remove"), RemoveUser);
-            Program.HTTPHookRouter.Add(hb.Build("/logout"), Logout);
+            Program.HTTPHookRouter.Add(EndpointsContract.Login, Login);
+            Program.HTTPHookRouter.Add(EndpointsContract.Register, Register);
+            Program.HTTPHookRouter.Add(EndpointsContract.Remove, RemoveUser);
+            Program.HTTPHookRouter.Add(EndpointsContract.Logout, Logout);
+            Program.HTTPHookRouter.Add(EndpointsContract.User, Update, HttpMethod.Post);
+            Program.HTTPHookRouter.Add(EndpointsContract.User, User, HttpMethod.Get);
         }
 
         private static Responce Login(byte[] payload)
@@ -88,7 +89,7 @@ namespace NetNotepad.AuthService.ExternalWorker
         private static RefreshTokenData GenerateTokens(User user, bool persistent, string deviceName, Guid? tokenGuid = null)
         {
             string refreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
-            TimeSpan ttl = persistent ? TimeSpan.FromDays(30) : TimeSpan.FromHours(12);
+            TimeSpan ttl = persistent ? user.RefreshTokenTTL : TimeSpan.FromHours(12);
             return new(user.UserGuid, tokenGuid ?? Guid.NewGuid(), refreshToken, DateTime.UtcNow + ttl, deviceName, persistent);
         }
 
@@ -138,6 +139,54 @@ namespace NetNotepad.AuthService.ExternalWorker
             db.RefreshTokens.RemoveRange(rtds);
             db.SaveChanges();
             return new Responce(HttpStatusCode.OK, "USER_LOGOUT");
+        }
+
+        private static Responce Update(byte[] payload)
+        {
+            return SerializeModule.TryDeserialize(payload, typeof(UpdatePassRequest), typeof(UpdateRTRequest)) switch
+            {
+                UpdatePassRequest upr => UpdatePass(upr),
+                UpdateRTRequest urtr => UpdateRT(urtr),
+                _ => ServiceExceptions.BAD_JSON_BODY,
+            };
+        }
+
+        private static Responce UpdatePass(UpdatePassRequest upr)
+        {
+            if (!Program.JWTValidator.Validate(upr.JWT, out ClaimsPrincipal principal)) { return ServiceExceptions.INVALID_JWT; }
+            Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
+            AppDBContext db = new();
+            User user = db.Users.AsNoTracking().First(d => d.UserGuid == userGuid);
+            if (BCrypt.Net.BCrypt.Verify(upr.OldPassword, user.PasswordHash)) { return ServiceExceptions.LOGIN_OR_PASSWORD_IS_INCORRECT; }
+            user = new(user.UserGuid, user.UserLogin, BCrypt.Net.BCrypt.HashPassword(upr.NewPassword), user.RefreshTokenTTL);
+            db.Users.Update(user);
+            db.RefreshTokens.Where(u => u.UserGuid == userGuid).ExecuteDelete();
+            db.SaveChanges();
+            return new Responce(HttpStatusCode.OK, "PASSWORD_UPDATED");
+        }
+
+        private static Responce UpdateRT(UpdateRTRequest urtr)
+        {
+            if (!Program.JWTValidator.Validate(urtr.JWT, out ClaimsPrincipal principal)) { return ServiceExceptions.INVALID_JWT; }
+            Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
+            AppDBContext db = new();
+            User user = db.Users.AsNoTracking().First(d => d.UserGuid == userGuid);
+            if (BCrypt.Net.BCrypt.Verify(urtr.Password, user.PasswordHash)) { return ServiceExceptions.LOGIN_OR_PASSWORD_IS_INCORRECT; }
+            user = new(user.UserGuid, user.UserLogin, user.PasswordHash, urtr.NewRefreshTokenTTL);
+            db.Users.Update(user);
+            db.SaveChanges();
+            return new Responce(HttpStatusCode.OK, "TTL_UPDATED");
+        }
+
+        private static Responce User(byte[] payload)
+        {
+            UserGetRequest ugr = SerializeModule.Deserialize<UserGetRequest>(payload);
+            if (ugr == null) { return ServiceExceptions.BAD_JSON_BODY; }
+            if (!Program.JWTValidator.Validate(ugr.JWT, out ClaimsPrincipal principal)) { return ServiceExceptions.INVALID_JWT; }
+            Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
+            using AppDBContext db = new();
+            User user = db.Users.AsNoTracking().First(d => d.UserGuid == userGuid);
+            return new UserGetResponce(HttpStatusCode.OK, "USER_GETTED", user.UserGuid, user.UserLogin, user.RefreshTokenTTL);
         }
     }
 }

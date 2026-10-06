@@ -9,17 +9,17 @@ namespace NetNotepad.Base
 
     public class HookRouter<T>
     {
-        public IReadOnlyDictionary<(string, string?), Func<byte[], T>> HooksMap => _hooksMap;
-        private Dictionary<(string, string?), Func<byte[], T>> _hooksMap = [];
+        public IReadOnlyDictionary<(string, HttpMethod?), Func<byte[], T>> HooksMap => _hooksMap;
+        private Dictionary<(string, HttpMethod?), Func<byte[], T>> _hooksMap = [];
 
-        public bool Route(string destination, string method, byte[] args, out T? result)
+        public bool Route(string destination, HttpMethod method, byte[] args, out T? result)
         {
             result = default;
             if (!_hooksMap.TryGetValue((destination, method), out Func<byte[], T>? callback)) { if (!_hooksMap.TryGetValue((destination, null), out callback)) { return false; } }
             result = callback.Invoke(args);
             return true;
         }
-        public bool Add(string route, Func<byte[], T> callback, string? method = null) => _hooksMap.TryAdd((route, method), callback);
-        public bool Remove(string route, string? method = null) => _hooksMap.Remove((route, method));
+        public bool Add(string route, Func<byte[], T> callback, HttpMethod? method = null) => _hooksMap.TryAdd((route, method), callback);
+        public bool Remove(string route, HttpMethod? method = null) => _hooksMap.Remove((route, method));
     }
 }
