@@ -9,7 +9,7 @@
         Title="NetNotepad.Client">
         <Panel>
                 <NavigationPage>
-                        <views:NewLoginPage/>
+                        <views:AccountSelectPage/>
                 </NavigationPage>
                 <WindowNotificationManager x:Name="NotificationManager"
                                            Position="TopCenter"

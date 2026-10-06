@@ -3,6 +3,7 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls.Notifications;
 using Avalonia.Styling;
+using NetNotepad.Client.Source.Localization;
 using NetNotepad.Client.Views;
 using ObservableCollections;
 using R3;
@@ -68,7 +69,7 @@ namespace NetNotepad.Client.ViewModels
         }
     }
 
-    public static class LoginPageLocalization
+    public static partial class PageLocalizations
     {
         public const string LOGIN_KEY = nameof(LOGIN_KEY);
         public const string PASSWORD_KEY = nameof(PASSWORD_KEY);

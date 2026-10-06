@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using NetNotepad.Base;
 
@@ -34,6 +35,28 @@ namespace NetNotepad.Client.Source
                 return default;
             }
             return SerializeModule.Deserialize<T>(File.ReadAllBytes(path));
+        }
+
+        public static T[] LoadAll<T>(string path)
+        {
+            path = Path.Combine(DirectoryPath, path);
+            DirectoryInfo di = new(path);
+            if (!di.Exists)
+            {
+                di.Create();
+                return [];
+            }
+            List<T> result = [];
+            foreach (FileInfo fi in di.EnumerateFiles())
+            {
+                try
+                {
+                    T? data = SerializeModule.Deserialize<T>(File.ReadAllBytes(fi.FullName));
+                    if (data != null) { result.Add(data); }
+                }
+                catch { }
+            }
+            return [.. result];
         }
 
         public static bool Exists(string path) => new FileInfo(Path.Combine(DirectoryPath, path)).Exists;
