@@ -14,6 +14,10 @@
     <AndroidJdkDirectory>D:\MAUI\AndroidJDK</AndroidJdkDirectory>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <AndroidPackageFormat>aab</AndroidPackageFormat>
+  </PropertyGroup>
+
   <ItemGroup>
     <AndroidResource Include="Icon.png">
       <Link>Resources\drawable\Icon.png</Link>

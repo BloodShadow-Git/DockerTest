@@ -19,8 +19,8 @@ namespace NetNotepad.Client.ViewModels
         public IReadOnlyObservableList<string> Hosts => _hosts;
         public BindableReactiveProperty<int> UserLoginIndex { get; } = new();
         public IReadOnlyObservableList<string> UserLogins => _userLogins;
-        public ICommand LoginCoomand => _loginCommand;
-        public ICommand RegisterCoomand => _registerCommand;
+        public ICommand LoginCommand => _loginCommand;
+        public ICommand RegisterCommand => _registerCommand;
         public BindableReactiveProperty<int> LanguagesIndex { get; } = new();
         public IReadOnlyObservableList<string> Languages => _languages;
         public BindableReactiveProperty<bool> ThemeSwitch { get; } = new();
