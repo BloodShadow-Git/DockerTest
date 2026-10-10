@@ -5,10 +5,16 @@
         xmlns:views="using:NetNotepad.Client.Views"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="NetNotepad.Client.Views.MainWindow"
+        x:DataType="views:MainWindow"
         Icon="/Assets/avalonia-logo.ico"
         Title="NetNotepad.Client">
+        <Design.DataContext>
+                <!-- This only sets the DataContext for the previewer in an IDE,
+                to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+                <views:MainWindow />
+        </Design.DataContext>
         <Panel>
-                <NavigationPage>
+                <NavigationPage x:Name="NavigationPage">
                         <views:AccountSelectPage/>
                 </NavigationPage>
                 <WindowNotificationManager x:Name="NotificationManager"

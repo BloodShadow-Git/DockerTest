@@ -3,6 +3,7 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls.Notifications;
 using Avalonia.Styling;
+using NetNotepad.Client.Source;
 using NetNotepad.Client.Source.Localization;
 using NetNotepad.Client.Views;
 using ObservableCollections;
@@ -17,13 +18,11 @@ namespace NetNotepad.Client.ViewModels
         public BindableReactiveProperty<bool> Remember { get; } = new();
         public BindableReactiveProperty<int> HostIndex { get; } = new(0);
         public IReadOnlyObservableList<string> Hosts => _hosts;
-        public BindableReactiveProperty<int> UserLoginIndex { get; } = new();
-        public IReadOnlyObservableList<string> UserLogins => _userLogins;
         public ICommand LoginCommand => _loginCommand;
         public ICommand RegisterCommand => _registerCommand;
         public BindableReactiveProperty<int> LanguagesIndex { get; } = new();
-        public IReadOnlyObservableList<string> Languages => _languages;
-        public BindableReactiveProperty<bool> ThemeSwitch { get; } = new();
+        public IObservableCollection<string> Languages => LocalizationManager.AvailableLocalizations;
+        public BindableReactiveProperty<bool> ThemeSwitch { get; } = Settings.ThemeSwitcher.ToBindableReactiveProperty();
 
         public IReadOnlyBindableReactiveProperty<string> LoginKey => _loginKey;
         public IReadOnlyBindableReactiveProperty<string> PasswordKey => _passwordKey;
@@ -37,34 +36,27 @@ namespace NetNotepad.Client.ViewModels
         public BindableReactiveProperty<string> _registerKey = new();
 
         private ObservableList<string> _hosts = ["http://localhost:8080", "http://192.168.0.100:8080"];
-        private ObservableList<string> _userLogins = ["bloodshadow", "blood-shadow"];
-        private ObservableList<string> _languages = ["Russian", "English"];
         private ReactiveCommand<Unit> _loginCommand = new();
         private ReactiveCommand<Unit> _registerCommand = new();
 
         public NewLoginPageModel()
         {
-            _loginKey.Value = "login";
-            _passwordKey.Value = "password";
-            _rememberMeKey.Value = "rememberMe";
-            _enterKey.Value = "enter";
-            _registerKey.Value = "register";
+            LocalizationManager.CurrentLocalization.Subscribe(_ =>
+            {
+                _loginKey.Value = LocalizationManager.Localize<string>(PageLocalizations.LOGIN_KEY);
+                _passwordKey.Value = LocalizationManager.Localize<string>(PageLocalizations.PASSWORD_KEY);
+                _rememberMeKey.Value = LocalizationManager.Localize<string>(PageLocalizations.REMEMBER_ME_KEY);
+                _enterKey.Value = LocalizationManager.Localize<string>(PageLocalizations.ENTER_KEY);
+                _registerKey.Value = LocalizationManager.Localize<string>(PageLocalizations.REGISTER_KEY);
+            });
+            LanguagesIndex.Subscribe(_ => { LocalizationManager.SetLocalization(LanguagesIndex.Value); });
+            ThemeSwitch.Subscribe(_ => Settings.ThemeSwitcher.Value = ThemeSwitch.Value);
 
             _loginCommand.Subscribe(_ =>
             {
-                Console.WriteLine("Enter\nLogin: {0}\nPassword: {1}\nRemember: {2}\nHost: {3}\nUser: {4}",
-                    Login.CurrentValue, Password.CurrentValue, Remember.CurrentValue, _hosts[HostIndex.CurrentValue], _userLogins[UserLoginIndex.CurrentValue]);
+                Console.WriteLine("Enter\nLogin: {0}\nPassword: {1}\nRemember: {2}\nHost: {3}",
+                    Login.CurrentValue, Password.CurrentValue, Remember.CurrentValue, _hosts[HostIndex.CurrentValue]);
                 MainWindow.NM.Show(new Notification("File saved", "Your document has been saved successfully.", NotificationType.Success, TimeSpan.FromSeconds(3)));
-            });
-            _registerCommand.Subscribe(_ =>
-            {
-                Console.WriteLine("Register\nLogin: {0}\nPassword: {1}\nRemember: {2}\nHost: {3}\nUser: {4}",
-                    Login.CurrentValue, Password.CurrentValue, Remember.CurrentValue, _hosts[HostIndex.CurrentValue], _userLogins[UserLoginIndex.CurrentValue]);
-            });
-            ThemeSwitch.Subscribe(_ =>
-            {
-                if (ThemeSwitch.CurrentValue) { Application.Current!.RequestedThemeVariant = ThemeVariant.Light; }
-                else { Application.Current!.RequestedThemeVariant = ThemeVariant.Dark; }
             });
         }
     }

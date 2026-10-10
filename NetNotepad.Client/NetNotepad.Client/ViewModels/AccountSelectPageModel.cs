@@ -1,5 +1,7 @@
-using Avalonia;
-using Avalonia.Styling;
+using System.Windows.Input;
+using NetNotepad.Client.Source;
+using NetNotepad.Client.Source.Localization;
+using NetNotepad.Client.Views;
 using ObservableCollections;
 using R3;
 
@@ -8,17 +10,19 @@ namespace NetNotepad.Client.ViewModels
     public partial class AccountSelectPageModel : ViewModelBase
     {
         public BindableReactiveProperty<int> LanguagesIndex { get; } = new();
-        public IReadOnlyObservableList<string> Languages => _languages;
-        public BindableReactiveProperty<bool> ThemeSwitch { get; } = new();
+        public IObservableCollection<string> Languages { get; } = LocalizationManager.AvailableLocalizations;
+        public BindableReactiveProperty<bool> ThemeSwitch { get; } = Settings.ThemeSwitcher.ToBindableReactiveProperty();
+        public ICommand TestCommand => _testCommand;
 
-        private ObservableList<string> _languages = ["Russian", "English"];
+        private ReactiveCommand<Unit> _testCommand = new();
 
         public AccountSelectPageModel()
         {
-            ThemeSwitch.Subscribe(_ =>
+            LanguagesIndex.Subscribe(_ => { LocalizationManager.SetLocalization(LanguagesIndex.Value); });
+            ThemeSwitch.Subscribe(_ => Settings.ThemeSwitcher.Value = ThemeSwitch.Value);
+            _testCommand.Subscribe(async _ =>
             {
-                if (ThemeSwitch.CurrentValue) { Application.Current!.RequestedThemeVariant = ThemeVariant.Light; }
-                else { Application.Current!.RequestedThemeVariant = ThemeVariant.Dark; }
+                await MainWindow.NP.PushAsync(new NewLoginPage());
             });
         }
     }

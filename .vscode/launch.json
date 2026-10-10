@@ -2,10 +2,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Avalonia: NetNotepad.Client",
+            "name": "Avalonia: NetNotepad.Client.Desktop",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/NetNotepad.Client/NetNotepad.Client.csproj"
+            "projectPath": "${workspaceFolder}/NetNotepad.Client/NetNotepad.Client.Desktop/NetNotepad.Client.Desktop.csproj"
         }
     ]
 }

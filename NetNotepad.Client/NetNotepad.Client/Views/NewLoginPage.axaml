@@ -19,7 +19,7 @@
             <RowDefinition Height="1*" />
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="25" Spacing="15">
-            <ComboBox SelectedIndex="{Binding LanguagesIndex.Value}" ItemsSource="{Binding Languages}"/>
+            <ComboBox SelectedIndex="{Binding LanguagesIndex.Value}" ItemsSource="{Binding Languages}" HorizontalAlignment="Right"/>
             <Button Content="{Binding RegisterKey.Value}" Command="{Binding RegisterCommand}" HorizontalAlignment="Right"/>
         </StackPanel>
         <Grid Grid.Row="1">
@@ -41,8 +41,6 @@
                         <ToggleButton Content="{Binding RememberMeKey.Value}" IsChecked="{Binding Remember.Value}" />
                         <Button Content="{Binding EnterKey.Value}" Command="{Binding LoginCommand}" />
                         <ComboBox SelectedIndex="{Binding HostIndex.Value}" ItemsSource="{Binding Hosts}" HorizontalAlignment="Right"/>
-                        <ComboBox SelectedIndex="{Binding UserLoginIndex.Value}" ItemsSource="{Binding UserLogins}" HorizontalAlignment="Right"/>
-
                     </StackPanel>
                 </ScrollViewer>
             </Border>

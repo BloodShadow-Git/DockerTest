@@ -30,12 +30,25 @@
             </Grid.ColumnDefinitions>
             <Border Grid.Column="1"
                     Padding="25" CornerRadius="25" Background="{DynamicResource MenuFlyoutItemBackgroundPressed}">
-                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                     <StackPanel Spacing="5" Orientation="Horizontal">
-                        <TextBlock Text="Hello" />
-                        <TextBlock Text="Hello" />
-                        <TextBlock Text="Hello" />
-                        <TextBlock Text="Hello" />
+                        <StackPanel Orientation="Horizontal" Spacing="5">
+                            <Border Background="Aqua" Padding="20" CornerRadius="25" Height="450" Width="300">
+                                <StackPanel Spacing="10" VerticalAlignment="Center">
+                                    <Border Background="White" Height="100" Width="100" Padding="15" CornerRadius="100">
+                                        <Image Source="/Assets/add_user.png" Stretch="UniformToFill" />
+                                    </Border>
+                                    <TextBlock Text="Add User" HorizontalAlignment="Center" />
+                                    <TextBlock Text="192.168.0.100:8080" HorizontalAlignment="Center" />
+                                    <TextBlock Text="Last login: 09.10.2026 15:00" HorizontalAlignment="Center" />
+                                    <TextBlock Text="Password required at: 10.10.2026 15:00" HorizontalAlignment="Center" />
+                                    <Button Command="{Binding TestCommand}" Content="TEST" />
+                                </StackPanel>
+                            </Border>
+                            <Border Background="Aqua" CornerRadius="25" Height="450" Width="300">
+
+                            </Border>
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </Border>
