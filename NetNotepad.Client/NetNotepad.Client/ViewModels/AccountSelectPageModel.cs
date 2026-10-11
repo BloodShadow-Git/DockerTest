@@ -13,8 +13,10 @@ namespace NetNotepad.Client.ViewModels
         public IObservableCollection<string> Languages { get; } = LocalizationManager.AvailableLocalizations;
         public BindableReactiveProperty<bool> ThemeSwitch { get; } = Settings.ThemeSwitcher.ToBindableReactiveProperty();
         public ICommand TestCommand => _testCommand;
+        public ICommand TostCommand => _tostCommand;
 
         private ReactiveCommand<Unit> _testCommand = new();
+        private ReactiveCommand<Unit> _tostCommand = new();
 
         public AccountSelectPageModel()
         {
@@ -23,6 +25,10 @@ namespace NetNotepad.Client.ViewModels
             _testCommand.Subscribe(async _ =>
             {
                 await MainWindow.NP.PushAsync(new NewLoginPage());
+            });
+            _tostCommand.Subscribe(async _ =>
+            {
+                await MainWindow.NP.PushAsync(new UserPage());
             });
         }
     }

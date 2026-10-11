@@ -31,31 +31,46 @@
             <Border Grid.Column="1"
                     Padding="25" CornerRadius="25" Background="{DynamicResource MenuFlyoutItemBackgroundPressed}">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                    <StackPanel Spacing="5" Orientation="Horizontal">
-                        <StackPanel Orientation="Horizontal" Spacing="5">
-                            <Border Background="Aqua" Padding="20" CornerRadius="25" Height="450" Width="300">
-                                <StackPanel Spacing="10" VerticalAlignment="Center">
-                                    <Border Background="White" Height="100" Width="100" Padding="15" CornerRadius="100">
-                                        <Image Source="/Assets/add_user.png" Stretch="UniformToFill" />
-                                    </Border>
-                                    <TextBlock Text="Add User" HorizontalAlignment="Center" />
-                                    <TextBlock Text="192.168.0.100:8080" HorizontalAlignment="Center" />
-                                    <TextBlock Text="Last login: 09.10.2026 15:00" HorizontalAlignment="Center" />
-                                    <TextBlock Text="Password required at: 10.10.2026 15:00" HorizontalAlignment="Center" />
-                                    <Button Command="{Binding TestCommand}" Content="TEST" />
-                                </StackPanel>
-                            </Border>
-                            <Border Background="Aqua" CornerRadius="25" Height="450" Width="300">
-
-                            </Border>
-                        </StackPanel>
+                    <StackPanel Spacing="20" Orientation="Horizontal">
+                        <Grid Height="350" Width="250">
+                            <Button Command="{Binding TestCommand}"
+                                    Background="{DynamicResource MenuFlyoutItemBackgroundPressed}"
+                                    Padding="20" CornerRadius="25"
+                                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                            <StackPanel Spacing="10" VerticalAlignment="Center" IsHitTestVisible="True" >
+                                <Button Command="{Binding TostCommand}"
+                                        Background="{DynamicResource MenuFlyoutItemForeground}"
+                                        VerticalAlignment="Center" HorizontalAlignment="Center"
+                                        Height="100" Width="100"
+                                        Padding="15" CornerRadius="100">
+                                    <Image Stretch="Uniform" Source="{DynamicResource AddUserIcon}"/>
+                                </Button>
+                                <TextBlock Text="Add User"
+                                           HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" IsHitTestVisible="False"/>
+                                <TextBlock Text="192.168.0.100:8080"
+                                           HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" IsHitTestVisible="False"/>
+                                <TextBlock Text="Last login: 09.10.2026 15:00"
+                                           HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" IsHitTestVisible="False"/>
+                                <TextBlock Text="Password required at: 10.10.2026 15:00"
+                                           HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" IsHitTestVisible="False"/>
+                            </StackPanel>
+                        </Grid>
+                        <ListBox>
+                            <ListBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ListBox.ItemsPanel>
+                            <ListBoxItem>s</ListBoxItem>
+                            <ListBoxItem>s</ListBoxItem>
+                        </ListBox>
                     </StackPanel>
                 </ScrollViewer>
             </Border>
         </Grid>
         <ToggleButton Grid.Row="0" IsChecked="{Binding ThemeSwitch.Value}"
                       HorizontalAlignment="Right" VerticalAlignment="Top" Margin="25">
-            <Image Stretch="UniformToFill" Width="32"
+            <Image Stretch="Uniform" Width="32"
                    MinHeight="{Binding $self.Width}" MaxHeight="{Binding $self.Width}" MinWidth="{Binding $self.Width}" MaxWidth="{Binding $self.Width}">
                 <Image.Styles>
                     <Style Selector="ToggleButton[IsChecked=true] Image">

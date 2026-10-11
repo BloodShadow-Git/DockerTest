@@ -18,10 +18,8 @@
             <RowDefinition Height="2*" />
             <RowDefinition Height="1*" />
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="25" Spacing="15">
-            <ComboBox SelectedIndex="{Binding LanguagesIndex.Value}" ItemsSource="{Binding Languages}" HorizontalAlignment="Right"/>
-            <Button Content="{Binding RegisterKey.Value}" Command="{Binding RegisterCommand}" HorizontalAlignment="Right"/>
-        </StackPanel>
+        <ComboBox SelectedIndex="{Binding LanguagesIndex.Value}" ItemsSource="{Binding Languages}"
+                  Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="25" />
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*" />
@@ -47,7 +45,7 @@
         </Grid>
         <ToggleButton Grid.Row="0" IsChecked="{Binding ThemeSwitch.Value}"
                       HorizontalAlignment="Right" VerticalAlignment="Top" Margin="25">
-            <Image Stretch="UniformToFill" Width="32"
+            <Image Stretch="Uniform" Width="32"
                    MinHeight="{Binding $self.Width}" MaxHeight="{Binding $self.Width}" MinWidth="{Binding $self.Width}" MaxWidth="{Binding $self.Width}">
                 <Image.Styles>
                     <Style Selector="ToggleButton[IsChecked=true] Image">
