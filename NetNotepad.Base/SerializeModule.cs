@@ -15,7 +15,8 @@ namespace NetNotepad.Base
             {
                 TypeNameHandling = TypeNameHandling.Auto,
                 PreserveReferencesHandling = PreserveReferencesHandling.Objects,
-                Formatting = Formatting.Indented
+                Formatting = Formatting.Indented,
+                MissingMemberHandling = MissingMemberHandling.Error
             };
         }
 

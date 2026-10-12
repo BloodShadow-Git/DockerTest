@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NetNotepad.AuthService.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20260930172042_Auto_20260930_172039")]
-    partial class Auto_20260930_172039
+    [Migration("20261011182917_Auto_20261011_182913")]
+    partial class Auto_20261011_182913
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,8 +27,9 @@ namespace NetNotepad.AuthService.Migrations
 
             modelBuilder.Entity("NetNotepad.AuthService.RefreshTokenData", b =>
                 {
-                    b.Property<string>("RefreshToken")
-                        .HasColumnType("text");
+                    b.Property<Guid>("DeviceGuid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
 
                     b.Property<string>("DeviceName")
                         .IsRequired()
@@ -40,10 +41,17 @@ namespace NetNotepad.AuthService.Migrations
                     b.Property<bool>("Persistent")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("RefreshToken")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<Guid>("UserGuid")
                         .HasColumnType("uuid");
 
-                    b.HasKey("RefreshToken");
+                    b.HasKey("DeviceGuid");
+
+                    b.HasIndex("RefreshToken")
+                        .IsUnique();
 
                     b.HasIndex("UserGuid");
 
@@ -68,8 +76,6 @@ namespace NetNotepad.AuthService.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("UserGuid");
-
-                    b.HasIndex("UserGuid");
 
                     b.ToTable("Users");
                 });

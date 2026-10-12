@@ -171,7 +171,7 @@ namespace NetNotepad.AuthService.ExternalWorker
             Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
             AppDBContext db = new();
             User user = db.Users.AsNoTracking().First(d => d.UserGuid == userGuid);
-            if (BCrypt.Net.BCrypt.Verify(urtr.Password, user.PasswordHash)) { return ServiceExceptions.LOGIN_OR_PASSWORD_IS_INCORRECT; }
+            if (!BCrypt.Net.BCrypt.Verify(urtr.Password, user.PasswordHash)) { return ServiceExceptions.LOGIN_OR_PASSWORD_IS_INCORRECT; }
             user = new(user.UserGuid, user.UserLogin, user.PasswordHash, urtr.NewRefreshTokenTTL);
             db.Users.Update(user);
             db.SaveChanges();

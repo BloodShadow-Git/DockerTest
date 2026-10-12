@@ -2,12 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
+using NetNotepad.Base;
 using NetNotepad.Client.Source;
 using NetNotepad.Client.Source.Localization;
 using NetNotepad.Client.ViewModels;
+using ObservableCollections;
 using R3;
+using static NetNotepad.Client.Source.DataManager;
 
 namespace NetNotepad.Client.Views;
 
@@ -27,10 +32,15 @@ public partial class MainWindow : Window
         }
         AvaloniaProviderInitializer.SetDefaultObservableSystem();
 
-        LocalizationData[] datas = FileSystem.LoadAll<LocalizationData>("Localizations", "*.json");
+        LocalizationData[] localizationDatas = FileSystem.LoadAll<LocalizationData>("Localizations", "*.json");
         foreach (string key in GetLocalizationKeys()) { LocalizationManager.RegisterKey<string>(key); }
-        if (datas.Length <= 0) { LocalizationManager.AddLocalization(GenerateLocalizationData()); }
-        LocalizationManager.AddLocalization(datas);
+        if (localizationDatas.Length <= 0) { LocalizationManager.AddLocalization(GenerateLocalizationData()); }
+        LocalizationManager.AddLocalization(localizationDatas);
+
+        string profilesDir = "Profiles";
+        DataManager.Load(FileSystem.LoadAll<UserProfile>(profilesDir, "*.json"));
+        DataManager.UserList.ObserveAdd().Subscribe(e => { FileSystem.Save(profilesDir + GenerateName(e.Value.Key), e.Value.Value); });
+        DataManager.UserList.ObserveRemove().Subscribe(e => { FileSystem.Remove(profilesDir + GenerateName(e.Value.Key)); });
 
         InitializeComponent();
         NP = NavigationPage;
@@ -38,12 +48,18 @@ public partial class MainWindow : Window
     }
 
     private static LocalizationData GenerateLocalizationData() => new("test-Test", [.. GetLocalizationKeys().Select(x => new LocalizationPair<string>(x, x))]);
-
     private static IEnumerable<string> GetLocalizationKeys()
     {
         return typeof(PageLocalizations).GetFields(BindingFlags.Public | BindingFlags.Static)
                         .Where(x => x.IsLiteral && x.FieldType == typeof(string))
                         .Select(x => x.GetRawConstantValue()?.ToString() ?? "null")
                         .OrderBy(x => x);
+    }
+    private static string GenerateName(UserID userID)
+    {
+        // byte[] bytes = SerializeModule.Serialize(userID);
+        // bytes = SHA256.HashData(bytes);
+        // return Encoding.UTF8.GetString(bytes);
+        return $"{userID.UserServer.Replace('.', '-').Replace(':', '-')}_{userID.UserGuid}";
     }
 }

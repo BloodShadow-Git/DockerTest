@@ -124,7 +124,7 @@ namespace NetNotepad.HttpHandler
 
         private static async Task Send(IQueueSpecification queue, HttpListenerContext context, string path)
         {
-            IRequester requester = await RabbitMQ.RequesterBuilder().RequestAddress().Queue(queue).Requester().BuildAsync();
+            IRequester requester = await RabbitMQ.RequesterBuilder().RequestAddress().Queue(queue).Requester().Timeout(Timeout.InfiniteTimeSpan).BuildAsync();
             IMessage message = await requester.PublishAsync(new AmqpMessage(SerializeModule.Serialize(
                 new ServiceRequest(path, new(context.Request.HttpMethod), new StreamReader(context.Request.InputStream).ReadToEnd())
             )));

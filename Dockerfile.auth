@@ -7,8 +7,7 @@ COPY NetNotepad.ServiceBase/*.csproj NetNotepad.ServiceBase/
 COPY NetNotepad.AuthService/*.csproj NetNotepad.AuthService/
 COPY NetNotepad.AuthService.ExternalWorker/*.csproj NetNotepad.AuthService.ExternalWorker/
 
-RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet restore NetNotepad.AuthService/NetNotepad.AuthService.csproj
+RUN dotnet restore NetNotepad.AuthService/NetNotepad.AuthService.csproj
 
 COPY NetNotepad.Contracts/. NetNotepad.Contracts/
 COPY NetNotepad.Base/. NetNotepad.Base/

@@ -5,6 +5,7 @@ namespace NetNotepad.Contracts
     public record Responce(HttpStatusCode HttpCode, string Message);
     public record ServiceRequest(string Path, HttpMethod Method, string Payload);
     public record ServiceResponce(HttpStatusCode HttpCode, string Message) : Responce(HttpCode, Message);
+    public record ServiceErrorResponce(HttpStatusCode HttpCode, string Message, Exception ex) : Responce(HttpCode, Message);
 
     public record ServiceExceptions(HttpStatusCode Code, string Message)
     {

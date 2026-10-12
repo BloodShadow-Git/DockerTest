@@ -183,7 +183,7 @@ namespace NetNotepad.AuthService.ExternalWorker
             catch (Exception ex)
             {
                 Log.Fatal(ex, "Exception while get request");
-                return Task.FromResult(ctx.Message(SerializeModule.Serialize(new ServiceResponce(HttpStatusCode.InternalServerError, "INTERNAL_ERROR"))));
+                return Task.FromResult(ctx.Message(SerializeModule.Serialize(new ServiceErrorResponce(HttpStatusCode.InternalServerError, "INTERNAL_ERROR", ex))));
             }
         }
     }

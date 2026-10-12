@@ -97,5 +97,19 @@ namespace NetNotepad.Client.Source
         }
 
         public static bool Exists(string path) => new FileInfo(Path.Combine(DirectoryPath, path)).Exists;
+
+        public static void Remove(string path)
+        {
+            path = Path.Combine(DirectoryPath, path);
+            FileInfo fi = new(path);
+            if (!fi.Exists)
+            {
+                if (fi.Directory == null) { return; }
+                if (!fi.Directory.Exists) { fi.Directory.Create(); }
+                fi.Create().Close();
+                return;
+            }
+            File.Delete(path);
+        }
     }
 }
