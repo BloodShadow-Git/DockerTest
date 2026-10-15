@@ -8,7 +8,7 @@ namespace NetNotepad.Client.Source.Localization
     public static class LocalizationManager
     {
         public static IObservableCollection<string> AvailableLocalizations => _availableLocalizations;
-        public static Observable<string> CurrentLocalization => _currentLocalization;
+        public static ReadOnlyReactiveProperty<string> CurrentLocalization => _currentLocalization;
         public static IObservableCollection<(Type, string)> RegisteredKeys => _registeredKeys;
 
         private static readonly ObservableList<string> _availableLocalizations = [];
@@ -23,7 +23,6 @@ namespace NetNotepad.Client.Source.Localization
             return result;
         }
         public static void SetLocalization(string localization) { if (_availableLocalizations.Contains(localization)) { _currentLocalization.Value = localization; } }
-        public static void SetLocalization(int index) { if (index >= 0 && index < _availableLocalizations.Count) { SetLocalization(_availableLocalizations[index]); } }
         public static void AddLocalization(LocalizationData data)
         {
             if (!_availableLocalizations.Contains(data.LocalizationKey)) { _availableLocalizations.Add(data.LocalizationKey); }

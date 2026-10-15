@@ -21,17 +21,4 @@
                                            Position="TopCenter"
                                            MaxItems="3" HorizontalAlignment="Center"/>
         </Panel>
-
-        <Window.Resources>
-                <ResourceDictionary>
-                        <ResourceDictionary.ThemeDictionaries>
-                                <ResourceDictionary x:Key="Light">
-                                        <Bitmap x:Key="AddUserIcon">/Assets/add_user_light.png</Bitmap>
-                                </ResourceDictionary>
-                                <ResourceDictionary x:Key="Dark">
-                                        <Bitmap x:Key="AddUserIcon">/Assets/add_user_dark.png</Bitmap>
-                                </ResourceDictionary>
-                        </ResourceDictionary.ThemeDictionaries>
-                </ResourceDictionary>
-        </Window.Resources>
 </Window>

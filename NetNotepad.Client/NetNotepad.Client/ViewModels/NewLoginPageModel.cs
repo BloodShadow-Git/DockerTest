@@ -1,8 +1,8 @@
 using System;
+using System.Collections.Specialized;
+using System.Linq;
 using System.Windows.Input;
-using Avalonia;
 using Avalonia.Controls.Notifications;
-using Avalonia.Styling;
 using NetNotepad.Client.Source;
 using NetNotepad.Client.Source.Localization;
 using NetNotepad.Client.Views;
@@ -17,42 +17,57 @@ namespace NetNotepad.Client.ViewModels
         public BindableReactiveProperty<string> Password { get; } = new();
         public BindableReactiveProperty<bool> Remember { get; } = new();
         public BindableReactiveProperty<int> HostIndex { get; } = new(0);
-        public IReadOnlyObservableList<string> Hosts => _hosts;
+        public NotifyCollectionChangedSynchronizedViewList<string> Hosts => _hosts.ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
         public ICommand LoginCommand => _loginCommand;
-        public BindableReactiveProperty<int> LanguagesIndex { get; } = new();
-        public IObservableCollection<string> Languages => LocalizationManager.AvailableLocalizations;
+        public BindableReactiveProperty<string> LanguagesItem { get; } = new();
+        public NotifyCollectionChangedSynchronizedViewList<string> Languages { get; } = LocalizationManager.AvailableLocalizations.ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
         public BindableReactiveProperty<bool> ThemeSwitch { get; } = Settings.ThemeSwitcher.ToBindableReactiveProperty();
 
         public IReadOnlyBindableReactiveProperty<string> LoginKey => _loginKey;
         public IReadOnlyBindableReactiveProperty<string> PasswordKey => _passwordKey;
         public IReadOnlyBindableReactiveProperty<string> RememberMeKey => _rememberMeKey;
         public IReadOnlyBindableReactiveProperty<string> EnterKey => _enterKey;
-        public BindableReactiveProperty<string> _loginKey = new();
-        public BindableReactiveProperty<string> _passwordKey = new();
-        public BindableReactiveProperty<string> _rememberMeKey = new();
-        public BindableReactiveProperty<string> _enterKey = new();
+        private BindableReactiveProperty<string> _loginKey { get; } = new();
+        private BindableReactiveProperty<string> _passwordKey { get; } = new();
+        private BindableReactiveProperty<string> _rememberMeKey { get; } = new();
+        private BindableReactiveProperty<string> _enterKey { get; } = new();
 
-        private ObservableList<string> _hosts = ["http://localhost:8080", "http://192.168.0.100:8080"];
-        private ReactiveCommand<Unit> _loginCommand = new();
+        private ObservableList<string> _hosts { get; } = ["http://localhost:8080", "http://192.168.0.100:8080"];
+        private ReactiveCommand<Unit> _loginCommand { get; } = new();
+
+        private CompositeDisposable _cd { get; } = [];
 
         public NewLoginPageModel()
         {
-            LocalizationManager.CurrentLocalization.Subscribe(_ =>
+            _cd.Add(Login);
+            _cd.Add(Password);
+            _cd.Add(Remember);
+            _cd.Add(HostIndex);
+            _cd.Add(LanguagesItem);
+            _cd.Add(Languages);
+            _cd.Add(ThemeSwitch);
+            _cd.Add(_loginKey);
+            _cd.Add(_passwordKey);
+            _cd.Add(_rememberMeKey);
+            _cd.Add(_enterKey);
+            _cd.Add(_loginCommand);
+
+            _cd.Add(LocalizationManager.CurrentLocalization.Subscribe(_ =>
             {
                 _loginKey.Value = LocalizationManager.Localize<string>(PageLocalizations.LOGIN_KEY);
                 _passwordKey.Value = LocalizationManager.Localize<string>(PageLocalizations.PASSWORD_KEY);
                 _rememberMeKey.Value = LocalizationManager.Localize<string>(PageLocalizations.REMEMBER_ME_KEY);
                 _enterKey.Value = LocalizationManager.Localize<string>(PageLocalizations.ENTER_KEY);
-            });
-            LanguagesIndex.Subscribe(_ => { LocalizationManager.SetLocalization(LanguagesIndex.Value); });
-            ThemeSwitch.Subscribe(_ => Settings.ThemeSwitcher.Value = ThemeSwitch.Value);
+            }));
+            _cd.Add(LanguagesItem.Skip(1).Subscribe(LocalizationManager.SetLocalization));
+            _cd.Add(ThemeSwitch.Subscribe(v => Settings.ThemeSwitcher.Value = v));
 
-            _loginCommand.Subscribe(_ =>
+            _cd.Add(_loginCommand.Subscribe(_ =>
             {
                 Console.WriteLine("Enter\nLogin: {0}\nPassword: {1}\nRemember: {2}\nHost: {3}",
                     Login.CurrentValue, Password.CurrentValue, Remember.CurrentValue, _hosts[HostIndex.CurrentValue]);
                 MainWindow.NM.Show(new Notification("File saved", "Your document has been saved successfully.", NotificationType.Success, TimeSpan.FromSeconds(3)));
-            });
+            }));
         }
     }
 

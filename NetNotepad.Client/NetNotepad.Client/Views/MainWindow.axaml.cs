@@ -2,11 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Security.Cryptography;
-using System.Text;
 using Avalonia.Controls;
 using Avalonia.Controls.Notifications;
-using NetNotepad.Base;
 using NetNotepad.Client.Source;
 using NetNotepad.Client.Source.Localization;
 using NetNotepad.Client.ViewModels;
@@ -38,7 +35,7 @@ public partial class MainWindow : Window
         LocalizationManager.AddLocalization(localizationDatas);
 
         string profilesDir = "Profiles";
-        DataManager.Load(FileSystem.LoadAll<UserProfile>(profilesDir, "*.json"));
+        DataManager.LoadUsers(FileSystem.LoadAll<UserProfile>(profilesDir, "*.json"));
         DataManager.UserList.ObserveAdd().Subscribe(e => { FileSystem.Save(profilesDir + GenerateName(e.Value.Key), e.Value.Value); });
         DataManager.UserList.ObserveRemove().Subscribe(e => { FileSystem.Remove(profilesDir + GenerateName(e.Value.Key)); });
 
@@ -48,18 +45,9 @@ public partial class MainWindow : Window
     }
 
     private static LocalizationData GenerateLocalizationData() => new("test-Test", [.. GetLocalizationKeys().Select(x => new LocalizationPair<string>(x, x))]);
-    private static IEnumerable<string> GetLocalizationKeys()
-    {
-        return typeof(PageLocalizations).GetFields(BindingFlags.Public | BindingFlags.Static)
-                        .Where(x => x.IsLiteral && x.FieldType == typeof(string))
-                        .Select(x => x.GetRawConstantValue()?.ToString() ?? "null")
-                        .OrderBy(x => x);
-    }
-    private static string GenerateName(UserID userID)
-    {
-        // byte[] bytes = SerializeModule.Serialize(userID);
-        // bytes = SHA256.HashData(bytes);
-        // return Encoding.UTF8.GetString(bytes);
-        return $"{userID.UserServer.Replace('.', '-').Replace(':', '-')}_{userID.UserGuid}";
-    }
+    private static IEnumerable<string> GetLocalizationKeys() => typeof(PageLocalizations).GetFields(BindingFlags.Public | BindingFlags.Static)
+                                                                    .Where(x => x.IsLiteral && x.FieldType == typeof(string))
+                                                                    .Select(x => x.GetRawConstantValue()?.ToString() ?? "null")
+                                                                    .OrderBy(x => x);
+    private static string GenerateName(UserID userID) => $"{userID.UserServer.Replace('.', '-').Replace(':', '-')}_{userID.UserGuid}";
 }
