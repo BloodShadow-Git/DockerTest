@@ -9,9 +9,6 @@
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
-
-    <AndroidSdkDirectory>D:\MAUI\AndroidSDK</AndroidSdkDirectory>
-    <AndroidJdkDirectory>D:\MAUI\AndroidJDK</AndroidJdkDirectory>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
