@@ -12,7 +12,7 @@ namespace NetNotepad.Client.Source.Localization
         public static IObservableCollection<(Type, string)> RegisteredKeys => _registeredKeys;
 
         private static readonly ObservableList<string> _availableLocalizations = [];
-        private static readonly ReactiveProperty<string> _currentLocalization = new("ERROR");
+        private static readonly ReactiveProperty<string> _currentLocalization = new();
         private static readonly ObservableHashSet<(Type, string)> _registeredKeys = [];
         private static readonly Dictionary<(string, string, Type), object> _localizations = [];
 
@@ -36,6 +36,7 @@ namespace NetNotepad.Client.Source.Localization
 
         public static T Localize<T>(string key)
         {
+            SetLanguage();
             if (!_registeredKeys.Contains((typeof(T), key))) { throw new Exception("Key not registered"); }
             return LocalizeInternal<T>(key);
         }
@@ -43,6 +44,12 @@ namespace NetNotepad.Client.Source.Localization
         {
             if (_localizations.TryGetValue((_currentLocalization.CurrentValue, key, typeof(T)), out object? value)) { return (T)value; }
             else { return default!; }
+        }
+
+        private static void SetLanguage()
+        {
+            if (_availableLocalizations.Count > 0 &&
+                _currentLocalization.Value == null) { SetLocalization(_availableLocalizations[0]); }
         }
     }
 }

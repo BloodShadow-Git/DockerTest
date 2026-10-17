@@ -1,6 +1,5 @@
 using System;
 using System.Windows.Input;
-using Avalonia.Platform;
 using NetNotepad.Client.Source;
 using NetNotepad.Client.Source.Localization;
 using NetNotepad.Client.Views;
@@ -15,7 +14,6 @@ namespace NetNotepad.Client.ViewModels
         public BindableReactiveProperty<string> LanguagesItem { get; } = new();
         public NotifyCollectionChangedSynchronizedViewList<string> Languages { get; } = LocalizationManager.AvailableLocalizations.ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
         public BindableReactiveProperty<bool> ThemeSwitch { get; } = Settings.ThemeSwitcher.ToBindableReactiveProperty();
-        // public NotifyCollectionChangedSynchronizedViewList<UserProfileView> UserList { get; } = DataManager.UserList.CreateView<UserProfileView>(e => e.Value).ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
         public NotifyCollectionChangedSynchronizedViewList<UserProfileView> UserList { get; }
         public ICommand TestCommand => _testCommand;
         public ICommand TostCommand => _tostCommand;
@@ -26,9 +24,10 @@ namespace NetNotepad.Client.ViewModels
 
         public AccountSelectPageModel()
         {
-            _userList = [];
             UserList = _userList.ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
             _userList.Add(new(null!, null!, DateTime.MinValue, null!, DateTime.MinValue));
+            _userList.Add(new(new(Guid.NewGuid(), "192.168.0.100:8080"), "BloodShadow", DateTime.Now, "lol", DateTime.MinValue));
+            _userList.Add(new(new(Guid.NewGuid(), "192.168.0.100:8080"), "Blood-Shadow", DateTime.Now, "kek", DateTime.MinValue));
             foreach ((_, UserProfile profile) in DataManager.UserList) { _userList.Add(profile); }
             DataManager.UserList.ObserveAdd().Subscribe(e => { _userList.Insert(_userList.Count - 1, e.Value.Value); });
             DataManager.UserList.ObserveRemove().Subscribe(e => { _userList.Remove(e.Value.Value); });
@@ -50,23 +49,31 @@ namespace NetNotepad.Client.ViewModels
     {
         public readonly IReadOnlyBindableReactiveProperty<UserIDView> UserID => _userID;
         public readonly IReadOnlyBindableReactiveProperty<string> UserLogin => _userLogin;
-        public readonly IReadOnlyBindableReactiveProperty<DateTime> LastLogin => _lastLogin;
+        public readonly IReadOnlyBindableReactiveProperty<string> LastLogin => _lastLogin;
         public readonly IReadOnlyBindableReactiveProperty<string> RefreshTokenKey => _refreshTokenKey;
-        public readonly IReadOnlyBindableReactiveProperty<DateTime> PasswordDate => _passwordDate;
+        public readonly IReadOnlyBindableReactiveProperty<string> PasswordDate => _passwordDate;
 
         private BindableReactiveProperty<UserIDView> _userID = new();
         private BindableReactiveProperty<string> _userLogin = new();
-        private BindableReactiveProperty<DateTime> _lastLogin = new();
+        private BindableReactiveProperty<string> _lastLogin = new();
         private BindableReactiveProperty<string> _refreshTokenKey = new();
-        private BindableReactiveProperty<DateTime> _passwordDate = new();
+        private BindableReactiveProperty<string> _passwordDate = new();
 
         public UserProfileView(UserIDView? UserID, string? UserLogin, DateTime? LastLogin, string? RefreshTokenKey, DateTime? PasswordDate)
         {
             if (UserID != null) { _userID.Value = (UserIDView)UserID; }
             if (UserLogin != null) { _userLogin.Value = UserLogin; }
-            if (LastLogin != null) { _lastLogin.Value = (DateTime)LastLogin; }
+            if (LastLogin != null)
+            {
+                var _lastLoginLocal = _lastLogin;
+                LocalizationManager.CurrentLocalization.Subscribe(_ => { _lastLoginLocal.Value = string.Format("{0}: {1:dd.MM.yyyy HH:mm}", LocalizationManager.Localize<string>(PageLocalizations.LAST_LOGIN), LastLogin); });
+            }
             if (RefreshTokenKey != null) { _refreshTokenKey.Value = RefreshTokenKey; }
-            if (PasswordDate != null) { _passwordDate.Value = (DateTime)PasswordDate; }
+            if (PasswordDate != null)
+            {
+                var _passwordDateLocal = _passwordDate;
+                LocalizationManager.CurrentLocalization.Subscribe(_ => { _passwordDateLocal.Value = string.Format("{0}: {1:dd.MM.yyyy HH:mm}", LocalizationManager.Localize<string>(PageLocalizations.PASSWORD_REQUIRED_AT), PasswordDate); });
+            }
         }
 
         public static implicit operator UserProfileView(UserProfile? up) => new(up?.UserID, up?.UserLogin, up?.LastLogin, up?.RefreshTokenKey, up?.PasswordDate);
@@ -89,5 +96,7 @@ namespace NetNotepad.Client.ViewModels
 
     public static partial class PageLocalizations
     {
+        public const string LAST_LOGIN = nameof(LAST_LOGIN);
+        public const string PASSWORD_REQUIRED_AT = nameof(PASSWORD_REQUIRED_AT);
     }
 }

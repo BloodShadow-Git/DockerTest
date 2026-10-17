@@ -30,39 +30,41 @@
             </Grid.ColumnDefinitions>
             <Border Grid.Column="1"
                     Padding="25" CornerRadius="25" Background="{DynamicResource MenuFlyoutItemBackgroundPressed}">
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                    <StackPanel Spacing="20" Orientation="Horizontal">
-                        <Grid Height="350" Width="250">
-                            <Button Command="{Binding TestCommand}"
-                                    Background="{DynamicResource MenuFlyoutItemBackgroundPressed}"
-                                    Padding="20" CornerRadius="25"
-                                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
-                            <StackPanel Spacing="10" VerticalAlignment="Center" IsHitTestVisible="True" >
-                                <Button Command="{Binding TostCommand}"
-                                        Background="{DynamicResource MenuFlyoutItemForeground}"
-                                        VerticalAlignment="Center" HorizontalAlignment="Center"
-                                        Height="100" Width="100"
-                                        Padding="15" CornerRadius="100">
-                                    <Image Stretch="Uniform" Source="{DynamicResource AddUserIcon}"/>
-                                </Button>
-                                <TextBlock Text="Add User"
-                                           HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" IsHitTestVisible="False"/>
-                                <TextBlock Text="192.168.0.100:8080"
-                                           HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" IsHitTestVisible="False"/>
-                                <TextBlock Text="Last login: 09.10.2026 15:00"
-                                           HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" IsHitTestVisible="False"/>
-                                <TextBlock Text="Password required at: 10.10.2026 15:00"
-                                           HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" IsHitTestVisible="False"/>
-                            </StackPanel>
-                        </Grid>
-                        <ListBox >
-                            <ListBox.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal" Spacing="10" />
-                                </ItemsPanelTemplate>
-                            </ListBox.ItemsPanel>
-                        </ListBox>
-                    </StackPanel>
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" HorizontalAlignment="Center">
+                    <ItemsControl ItemsSource="{Binding UserList}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Spacing="20" Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Height="350" Width="250">
+                                    <Button Command="{Binding $parent[ItemsControl].DataContext.TestCommand}"
+                                            Background="{DynamicResource MenuFlyoutItemBackgroundPressed}"
+                                            Padding="20" CornerRadius="25"
+                                            HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                                    <StackPanel Spacing="10" VerticalAlignment="Center" IsHitTestVisible="True" >
+                                        <Button Command="{Binding $parent[ItemsControl].DataContext.TostCommand}"
+                                                Background="{DynamicResource MenuFlyoutItemForeground}"
+                                                VerticalAlignment="Center" HorizontalAlignment="Center"
+                                                Height="100" Width="100"
+                                                Padding="15" CornerRadius="100">
+                                            <Image Stretch="Uniform" Source="{DynamicResource AddUserIcon}"/>
+                                        </Button>
+                                        <TextBlock Text="{Binding UserLogin.Value}"
+                                                   HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" IsHitTestVisible="False"/>
+                                        <TextBlock Text="{Binding UserID.Value.UserServer.Value}"
+                                                   HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" IsHitTestVisible="False"/>
+                                        <TextBlock Text="{Binding LastLogin.Value}"
+                                                   HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" IsHitTestVisible="False"/>
+                                        <TextBlock Text="{Binding PasswordDate.Value}"
+                                                   HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" IsHitTestVisible="False"/>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </ScrollViewer>
             </Border>
         </Grid>
