@@ -1,13 +1,11 @@
 using System;
-using System.Collections.Specialized;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Windows.Input;
-using Avalonia;
 using Avalonia.Controls.Notifications;
 using NetNotepad.Client.Source;
 using NetNotepad.Client.Source.Localization;
 using NetNotepad.Client.Views;
+using NetNotepad.Contracts;
 using ObservableCollections;
 using R3;
 
@@ -51,11 +49,25 @@ namespace NetNotepad.Client.ViewModels
             LanguagesItem.Skip(1).Subscribe(LocalizationManager.SetLocalization);
             ThemeSwitch.Subscribe(v => Settings.ThemeSwitcher.Value = v);
 
-            _loginCommand.Subscribe(_ =>
+            _loginCommand.Subscribe(async _ =>
             {
-                Console.WriteLine("Enter\nLogin: {0}\nPassword: {1}\nRemember: {2}\nHost: {3}",
-                    Login.CurrentValue, Password.CurrentValue, Remember.CurrentValue, Host.CurrentValue);
-                MainWindow.NM.Show(new Notification("Client", $"{Application.Current!.Name} ({RuntimeInformation.OSDescription})", NotificationType.Success, TimeSpan.FromSeconds(3)));
+                try
+                {
+                    if (string.IsNullOrEmpty(Login.Value) ||
+                    string.IsNullOrEmpty(Password.Value) ||
+                    string.IsNullOrEmpty(Host.Value))
+                    {
+                        MainWindow.NM.Show("Please fill all fields", NotificationType.Error);
+                        return;
+                    }
+                    APIWorker.BaseUrl = new(Host.Value);
+                    LoginResponce lr = await APIWorker.Login(new LoginRequest(Login.Value, Password.Value, Remember.Value, APIWorker.CLIENT));
+                    UserGetResponce ugr = await APIWorker.GetUser(new(lr.JWT));
+                    DataManager.UserID userid = new(ugr.UserGuid, Host.Value);
+                    if (DataManager.UserList.ContainsKey(userid)) { DataManager.RemoveUser(userid); }
+                    DataManager.AddUser(new(userid, ugr.UserLogin, DateTime.Now, lr.RefreshToken, lr.CreationDate + ugr.RefreshTokenTTL));
+                }
+                catch (Exception ex) { MainWindow.NM.Show(new Notification("Exception", ex.ToString(), NotificationType.Error)); }
             });
         }
     }

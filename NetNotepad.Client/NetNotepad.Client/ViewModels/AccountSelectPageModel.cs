@@ -26,9 +26,6 @@ namespace NetNotepad.Client.ViewModels
         {
             UserList = _userList.ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
             _userList.Add(new(null, null, null, null, null));
-            DataManager.AddUser(new(new(Guid.NewGuid(), "http://192.168.0.100:8080"), "BloodShadow", DateTime.Now, "lol", DateTime.MinValue));
-            DataManager.AddUser(new(new(Guid.NewGuid(), "http://192.168.0.100:8080"), "Blood-Shadow", DateTime.Now, "kek", DateTime.MinValue));
-            DataManager.AddUser(new(new(Guid.NewGuid(), "http://192.168.15.100:8080"), "CheckPook", DateTime.Now, "kek", DateTime.MinValue));
             foreach ((_, UserProfile profile) in DataManager.UserList) { _userList.Insert(_userList.Count - 1, profile); }
             DataManager.UserList.ObserveAdd().Subscribe(e => { _userList.Insert(_userList.Count - 1, e.Value.Value); });
             DataManager.UserList.ObserveRemove().Subscribe(e => { _userList.Remove(e.Value.Value); });

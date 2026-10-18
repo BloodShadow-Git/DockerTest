@@ -7,7 +7,8 @@ namespace NetNotepad.Client.Source
 {
     public static class DataManager
     {
-        public static IObservableCollection<KeyValuePair<UserID, UserProfile>> UserList => _userList;
+        public static ReactiveProperty<UserID> Selecteduser { get; } = new();
+        public static IReadOnlyObservableDictionary<UserID, UserProfile> UserList => _userList;
         public static ISynchronizedView<KeyValuePair<string, int>, string> HostList { get; }
 
         private static ObservableDictionary<UserID, UserProfile> _userList = [];
