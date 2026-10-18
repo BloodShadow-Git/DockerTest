@@ -31,12 +31,12 @@ namespace NetNotepad.Client.Source.Localization
                 (string lang, string key, Type type) key = (data.LocalizationKey, pair.Key, pair.Value.GetType());
                 _localizations[key] = pair.Value;
             }
+            SetLanguage();
         }
         public static void AddLocalization(params LocalizationData[] datas) { foreach (var data in datas) { AddLocalization(data); } }
 
         public static T Localize<T>(string key)
         {
-            SetLanguage();
             if (!_registeredKeys.Contains((typeof(T), key))) { throw new Exception("Key not registered"); }
             return LocalizeInternal<T>(key);
         }

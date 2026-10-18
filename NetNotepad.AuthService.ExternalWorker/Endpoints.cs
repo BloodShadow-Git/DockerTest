@@ -39,15 +39,16 @@ namespace NetNotepad.AuthService.ExternalWorker
             db.RefreshTokens.Add(rtd);
             db.SaveChanges();
             Program.EventHandler.Publish(Events.USER_LOGIN, new UserLogin(user.UserGuid));
+            string JWT = Program.JWTBuilder.Clone().SetLifeSpan(Program.JWTTTL).SetUserGuid(user.UserGuid).Build(out _);
+            Program.RedisDB.StringSet(JWT, rtd.RefreshToken, Program.JWTTTL);
             return new LoginResponce(HttpStatusCode.OK, "CREATED",
-                Program.JWTBuilder.Clone().SetLifeSpan(TimeSpan.FromMinutes(10)).SetUserGuid(user.UserGuid).Build(out _),
-                rtd.RefreshToken, rtd.DeviceGuid, rtd.ExpireDate);
+                JWT, rtd.RefreshToken, rtd.DeviceGuid, rtd.CreationDate);
         }
         private static Responce LoginLRTR(LoginRTRequest lrtr)
         {
             using AppDBContext db = new();
             RefreshTokenData? rtd = db.RefreshTokens.AsNoTracking().FirstOrDefault(d => d.RefreshToken == lrtr.RefreshToken);
-            if (rtd == null || rtd.ExpireDate <= DateTime.UtcNow)
+            if (rtd == null || (rtd.CreationDate + rtd.TokenTTL) <= DateTime.UtcNow)
             {
                 if (rtd != null)
                 {
@@ -61,9 +62,10 @@ namespace NetNotepad.AuthService.ExternalWorker
             db.RefreshTokens.Update(rtd);
             db.SaveChanges();
             Program.EventHandler.Publish(Events.USER_LOGIN, new UserLogin(user.UserGuid));
+            string JWT = Program.JWTBuilder.Clone().SetLifeSpan(Program.JWTTTL).SetUserGuid(user.UserGuid).Build(out _);
+            Program.RedisDB.StringSet(JWT, rtd.RefreshToken, Program.JWTTTL);
             return new LoginResponce(HttpStatusCode.OK, "CREATED",
-                Program.JWTBuilder.Clone().SetLifeSpan(TimeSpan.FromMinutes(10)).SetUserGuid(user.UserGuid).Build(out _),
-                rtd.RefreshToken, rtd.DeviceGuid, rtd.ExpireDate);
+                JWT, rtd.RefreshToken, rtd.DeviceGuid, rtd.CreationDate);
         }
 
         private static Responce Register(byte[] payload)
@@ -80,9 +82,10 @@ namespace NetNotepad.AuthService.ExternalWorker
                 db.RefreshTokens.Add(rtd);
                 db.SaveChanges();
                 Program.EventHandler.Publish(Events.USER_CREATED, new UserCreated(user.UserGuid, user.UserLogin));
+                string JWT = Program.JWTBuilder.Clone().SetLifeSpan(Program.JWTTTL).SetUserGuid(user.UserGuid).Build(out _);
+                Program.RedisDB.StringSet(JWT, rtd.RefreshToken, Program.JWTTTL);
                 return new RegisterResponce(HttpStatusCode.OK, "CREATED",
-                    Program.JWTBuilder.Clone().SetLifeSpan(TimeSpan.FromMinutes(10)).SetUserGuid(user.UserGuid).Build(out _),
-                    rtd.RefreshToken, rtd.DeviceGuid, rtd.ExpireDate);
+                    JWT, rtd.RefreshToken, rtd.DeviceGuid, rtd.CreationDate);
             }
         }
 
@@ -90,7 +93,7 @@ namespace NetNotepad.AuthService.ExternalWorker
         {
             string refreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
             TimeSpan ttl = persistent ? user.RefreshTokenTTL : TimeSpan.FromHours(12);
-            return new(user.UserGuid, tokenGuid ?? Guid.NewGuid(), refreshToken, DateTime.UtcNow + ttl, deviceName, persistent);
+            return new(user.UserGuid, tokenGuid ?? Guid.NewGuid(), refreshToken, DateTime.UtcNow, ttl, deviceName, persistent);
         }
 
         private static Responce RemoveUser(byte[] payload)

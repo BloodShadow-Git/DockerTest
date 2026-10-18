@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using NetNotepad.Base;
 using NetNotepad.Contracts;
 using NetNotepad.ServiceBase;
+using Npgsql.Replication;
 using RabbitMQ.AMQP.Client;
 using Serilog;
 using StackExchange.Redis;
+using TimeSpanParserUtil;
 
 namespace NetNotepad.AuthService.ExternalWorker
 {
@@ -17,6 +19,7 @@ namespace NetNotepad.AuthService.ExternalWorker
         public static IQueueSpecification HTTPAuthQueue { get; private set; } = null!;
         public static IQueueSpecification InternalAuthQueue { get; private set; } = null!;
         public static HookRouter<Responce> HTTPHookRouter { get; private set; } = new();
+        public static TimeSpan JWTTTL { get; private set; }
 
         public static IDatabase RedisDB { get; private set; } = null!;
         public static IConnection HTTPRabbitMQ { get; private set; } = null!;
@@ -38,6 +41,23 @@ namespace NetNotepad.AuthService.ExternalWorker
             else { Log.Information("Keys validation succeful"); }
             JWTBuilder = JWTBuilder.SetPrivatePem(privatePem);
             JWTValidator = JWTValidator.SetPublicPem(publicPem);
+
+            string? jwtTempTTL = Environment.GetEnvironmentVariable("AUTH_JWT_TEMP_TTL");
+            if (jwtTempTTL == null)
+            {
+                jwtTempTTL = "12h";
+                Log.Information("No JWT Token TTL enviroment variable found. Use default 12h TTL.");
+            }
+            if (TimeSpanParser.TryParse(jwtTempTTL, out TimeSpan span))
+            {
+                JWTTTL = span;
+                Log.Information($"Set JWT TTL as {JWTTTL}");
+            }
+            else
+            {
+                Log.Information("JWT Token TTL enviroment variable incorrect. Use default 12h TTL.");
+                JWTTTL = TimeSpan.FromHours(12);
+            }
 
             try
             {

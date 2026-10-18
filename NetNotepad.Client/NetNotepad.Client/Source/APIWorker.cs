@@ -16,6 +16,11 @@ namespace NetNotepad.Client.Source
         }
         private static HttpClient _client = new();
 
+        static APIWorker()
+        {
+            _client = new();
+        }
+
         public static Task<LoginResponce> Login(LoginRequest request) => Request<LoginResponce>(request, EndpointsContract.Login, HttpMethod.Post);
         public static Task<LoginResponce> Login(LoginRTRequest request) => Request<LoginResponce>(request, EndpointsContract.Login, HttpMethod.Post);
         public static Task<RegisterResponce> Register(RegisterRequest request) => Request<RegisterResponce>(request, EndpointsContract.Register, HttpMethod.Post);

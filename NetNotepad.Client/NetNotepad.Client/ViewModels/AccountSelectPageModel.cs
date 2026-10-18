@@ -11,7 +11,7 @@ namespace NetNotepad.Client.ViewModels
 {
     public partial class AccountSelectPageModel : ViewModelBase
     {
-        public BindableReactiveProperty<string> LanguagesItem { get; } = new();
+        public BindableReactiveProperty<string> LanguagesItem { get; } = new(LocalizationManager.CurrentLocalization.CurrentValue);
         public NotifyCollectionChangedSynchronizedViewList<string> Languages { get; } = LocalizationManager.AvailableLocalizations.ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
         public BindableReactiveProperty<bool> ThemeSwitch { get; } = Settings.ThemeSwitcher.ToBindableReactiveProperty();
         public NotifyCollectionChangedSynchronizedViewList<UserProfileView> UserList { get; }
@@ -19,16 +19,17 @@ namespace NetNotepad.Client.ViewModels
         public ICommand TostCommand => _tostCommand;
 
         private ObservableList<UserProfileView> _userList = [];
-        private ReactiveCommand<Unit> _testCommand = new();
-        private ReactiveCommand<Unit> _tostCommand = new();
+        private ReactiveCommand<UserProfileView> _testCommand = new();
+        private ReactiveCommand<UserProfileView> _tostCommand = new();
 
         public AccountSelectPageModel()
         {
             UserList = _userList.ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
-            _userList.Add(new(null!, null!, DateTime.MinValue, null!, DateTime.MinValue));
-            _userList.Add(new(new(Guid.NewGuid(), "192.168.0.100:8080"), "BloodShadow", DateTime.Now, "lol", DateTime.MinValue));
-            _userList.Add(new(new(Guid.NewGuid(), "192.168.0.100:8080"), "Blood-Shadow", DateTime.Now, "kek", DateTime.MinValue));
-            foreach ((_, UserProfile profile) in DataManager.UserList) { _userList.Add(profile); }
+            _userList.Add(new(null, null, null, null, null));
+            DataManager.AddUser(new(new(Guid.NewGuid(), "http://192.168.0.100:8080"), "BloodShadow", DateTime.Now, "lol", DateTime.MinValue));
+            DataManager.AddUser(new(new(Guid.NewGuid(), "http://192.168.0.100:8080"), "Blood-Shadow", DateTime.Now, "kek", DateTime.MinValue));
+            DataManager.AddUser(new(new(Guid.NewGuid(), "http://192.168.15.100:8080"), "CheckPook", DateTime.Now, "kek", DateTime.MinValue));
+            foreach ((_, UserProfile profile) in DataManager.UserList) { _userList.Insert(_userList.Count - 1, profile); }
             DataManager.UserList.ObserveAdd().Subscribe(e => { _userList.Insert(_userList.Count - 1, e.Value.Value); });
             DataManager.UserList.ObserveRemove().Subscribe(e => { _userList.Remove(e.Value.Value); });
 
@@ -63,6 +64,11 @@ namespace NetNotepad.Client.ViewModels
         {
             if (UserID != null) { _userID.Value = (UserIDView)UserID; }
             if (UserLogin != null) { _userLogin.Value = UserLogin; }
+            else
+            {
+                var _userLoginLocal = _userLogin;
+                LocalizationManager.CurrentLocalization.Subscribe(_ => { _userLoginLocal.Value = LocalizationManager.Localize<string>(PageLocalizations.ADD_USER); });
+            }
             if (LastLogin != null)
             {
                 var _lastLoginLocal = _lastLogin;
@@ -96,6 +102,7 @@ namespace NetNotepad.Client.ViewModels
 
     public static partial class PageLocalizations
     {
+        public const string ADD_USER = nameof(ADD_USER);
         public const string LAST_LOGIN = nameof(LAST_LOGIN);
         public const string PASSWORD_REQUIRED_AT = nameof(PASSWORD_REQUIRED_AT);
     }

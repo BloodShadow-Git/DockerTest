@@ -31,14 +31,17 @@
                 <ScrollViewer>
                     <StackPanel Spacing="5">
                         <TextBox PlaceholderText="{Binding LoginKey.Value}" AcceptsReturn="False" Text="{Binding Login.Value}" />
-                        <TextBox PlaceholderText="{Binding PasswordKey.Value}" AcceptsReturn="False" RevealPassword="False" PasswordChar="*" Text="{Binding Password.Value}" >
-                            <TextBox.KeyBindings>
+                        <TextBox PlaceholderText="{Binding PasswordKey.Value}" AcceptsReturn="False" RevealPassword="False" PasswordChar="*" Text="{Binding Password.Value}" />
+                        <AutoCompleteBox ItemsSource="{Binding Hosts}"
+                                         Text="{Binding Host.Value}"
+                                         PlaceholderText="{Binding HostPL.Value}"
+                                         FilterMode="Contains">
+                            <AutoCompleteBox.KeyBindings>
                                 <KeyBinding Command="{Binding LoginCommand}" Gesture="Enter"/>
-                            </TextBox.KeyBindings>
-                        </TextBox>
+                            </AutoCompleteBox.KeyBindings>
+                        </AutoCompleteBox>
                         <ToggleButton Content="{Binding RememberMeKey.Value}" IsChecked="{Binding Remember.Value}" />
                         <Button Content="{Binding EnterKey.Value}" Command="{Binding LoginCommand}" />
-                        <ComboBox SelectedIndex="{Binding HostIndex.Value}" ItemsSource="{Binding Hosts}" HorizontalAlignment="Right"/>
                     </StackPanel>
                 </ScrollViewer>
             </Border>

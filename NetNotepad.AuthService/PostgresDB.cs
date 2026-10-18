@@ -24,7 +24,7 @@ namespace NetNotepad.AuthService
     }
 
     public record User(Guid UserGuid, string UserLogin, string PasswordHash, TimeSpan RefreshTokenTTL);
-    public record RefreshTokenData(Guid UserGuid, Guid DeviceGuid, string RefreshToken, DateTime ExpireDate, string DeviceName, bool Persistent);
+    public record RefreshTokenData(Guid UserGuid, Guid DeviceGuid, string RefreshToken, DateTime CreationDate, TimeSpan TokenTTL, string DeviceName, bool Persistent);
 
     public class AppDBContextFactory : IDesignTimeDbContextFactory<AppDBContext>
     {

@@ -41,11 +41,13 @@
                             <DataTemplate>
                                 <Grid Height="350" Width="250">
                                     <Button Command="{Binding $parent[ItemsControl].DataContext.TestCommand}"
+                                            CommandParameter="{Binding}"
                                             Background="{DynamicResource MenuFlyoutItemBackgroundPressed}"
                                             Padding="20" CornerRadius="25"
                                             HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
                                     <StackPanel Spacing="10" VerticalAlignment="Center" IsHitTestVisible="True" >
                                         <Button Command="{Binding $parent[ItemsControl].DataContext.TostCommand}"
+                                                CommandParameter="{Binding}"
                                                 Background="{DynamicResource MenuFlyoutItemForeground}"
                                                 VerticalAlignment="Center" HorizontalAlignment="Center"
                                                 Height="100" Width="100"

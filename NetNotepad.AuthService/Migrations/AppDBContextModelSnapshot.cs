@@ -28,12 +28,12 @@ namespace NetNotepad.AuthService.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("CreationDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("DeviceName")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<DateTime>("ExpireDate")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("Persistent")
                         .HasColumnType("boolean");
@@ -41,6 +41,9 @@ namespace NetNotepad.AuthService.Migrations
                     b.Property<string>("RefreshToken")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<TimeSpan>("TokenTTL")
+                        .HasColumnType("interval");
 
                     b.Property<Guid>("UserGuid")
                         .HasColumnType("uuid");
