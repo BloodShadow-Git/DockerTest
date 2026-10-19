@@ -41,7 +41,10 @@
                             </AutoCompleteBox.KeyBindings>
                         </AutoCompleteBox>
                         <ToggleButton Content="{Binding RememberMeKey.Value}" IsChecked="{Binding Remember.Value}" />
-                        <Button Content="{Binding EnterKey.Value}" Command="{Binding LoginCommand}" />
+                        <StackPanel Orientation="Horizontal" Spacing="15">
+                            <Button Content="{Binding EnterKey.Value}" Command="{Binding LoginCommand}" />
+                            <Button Content="{Binding EnterKey.Value}" Command="{Binding LoginCommand}" />
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </Border>

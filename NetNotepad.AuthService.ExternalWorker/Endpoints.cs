@@ -20,7 +20,7 @@ namespace NetNotepad.AuthService.ExternalWorker
             Program.HTTPHookRouter.Add(EndpointsContract.User, User, HttpMethod.Get);
         }
 
-        private static Responce Login(byte[] payload)
+        private static Response Login(byte[] payload)
         {
             return SerializeModule.TryDeserialize(payload, typeof(LoginRequest), typeof(LoginRTRequest)) switch
             {
@@ -29,7 +29,7 @@ namespace NetNotepad.AuthService.ExternalWorker
                 _ => ServiceExceptions.BAD_JSON_BODY,
             };
         }
-        private static Responce LoginLR(LoginRequest lr)
+        private static Response LoginLR(LoginRequest lr)
         {
             using AppDBContext db = new();
             User? user = db.Users.AsNoTracking().FirstOrDefault(d => d.UserLogin == lr.Login);
@@ -41,10 +41,10 @@ namespace NetNotepad.AuthService.ExternalWorker
             Program.EventHandler.Publish(Events.USER_LOGIN, new UserLogin(user.UserGuid));
             string JWT = Program.JWTBuilder.Clone().SetLifeSpan(Program.JWTTTL).SetUserGuid(user.UserGuid).Build(out _);
             Program.RedisDB.StringSet(JWT, rtd.RefreshToken, Program.JWTTTL);
-            return new LoginResponce(HttpStatusCode.OK, "CREATED",
+            return new LoginResponse(HttpStatusCode.OK, "CREATED",
                 JWT, rtd.RefreshToken, rtd.DeviceGuid, rtd.CreationDate);
         }
-        private static Responce LoginLRTR(LoginRTRequest lrtr)
+        private static Response LoginLRTR(LoginRTRequest lrtr)
         {
             using AppDBContext db = new();
             RefreshTokenData? rtd = db.RefreshTokens.AsNoTracking().FirstOrDefault(d => d.RefreshToken == lrtr.RefreshToken);
@@ -64,11 +64,11 @@ namespace NetNotepad.AuthService.ExternalWorker
             Program.EventHandler.Publish(Events.USER_LOGIN, new UserLogin(user.UserGuid));
             string JWT = Program.JWTBuilder.Clone().SetLifeSpan(Program.JWTTTL).SetUserGuid(user.UserGuid).Build(out _);
             Program.RedisDB.StringSet(JWT, rtd.RefreshToken, Program.JWTTTL);
-            return new LoginResponce(HttpStatusCode.OK, "CREATED",
+            return new LoginResponse(HttpStatusCode.OK, "CREATED",
                 JWT, rtd.RefreshToken, rtd.DeviceGuid, rtd.CreationDate);
         }
 
-        private static Responce Register(byte[] payload)
+        private static Response Register(byte[] payload)
         {
             RegisterRequest rr = SerializeModule.Deserialize<RegisterRequest>(payload);
             if (rr == null) { return ServiceExceptions.BAD_JSON_BODY; }
@@ -84,7 +84,7 @@ namespace NetNotepad.AuthService.ExternalWorker
                 Program.EventHandler.Publish(Events.USER_CREATED, new UserCreated(user.UserGuid, user.UserLogin));
                 string JWT = Program.JWTBuilder.Clone().SetLifeSpan(Program.JWTTTL).SetUserGuid(user.UserGuid).Build(out _);
                 Program.RedisDB.StringSet(JWT, rtd.RefreshToken, Program.JWTTTL);
-                return new RegisterResponce(HttpStatusCode.OK, "CREATED",
+                return new RegisterResponse(HttpStatusCode.OK, "CREATED",
                     JWT, rtd.RefreshToken, rtd.DeviceGuid, rtd.CreationDate);
             }
         }
@@ -96,7 +96,7 @@ namespace NetNotepad.AuthService.ExternalWorker
             return new(user.UserGuid, tokenGuid ?? Guid.NewGuid(), refreshToken, DateTime.UtcNow, ttl, deviceName, persistent);
         }
 
-        private static Responce RemoveUser(byte[] payload)
+        private static Response RemoveUser(byte[] payload)
         {
             RemoveRequest rr = SerializeModule.Deserialize<RemoveRequest>(payload);
             if (rr == null) { return ServiceExceptions.BAD_JSON_BODY; }
@@ -108,10 +108,10 @@ namespace NetNotepad.AuthService.ExternalWorker
             db.Users.Remove(user);
             db.SaveChanges();
             Program.EventHandler.Publish(Events.USER_REMOVED, new UserRemove(userGuid));
-            return new Responce(HttpStatusCode.OK, "USER_REMOVED");
+            return new Response(HttpStatusCode.OK, "USER_REMOVED");
         }
 
-        private static Responce Logout(byte[] payload)
+        private static Response Logout(byte[] payload)
         {
             return SerializeModule.TryDeserialize(payload, typeof(LogoutRequest), typeof(LogoutRTRequest)) switch
             {
@@ -120,7 +120,7 @@ namespace NetNotepad.AuthService.ExternalWorker
                 _ => ServiceExceptions.BAD_JSON_BODY,
             };
         }
-        private static Responce LogoutLR(LogoutRequest lr)
+        private static Response LogoutLR(LogoutRequest lr)
         {
             if (!Program.JWTValidator.Validate(lr.JWT, out ClaimsPrincipal principal)) { return ServiceExceptions.INVALID_JWT; }
             Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
@@ -128,9 +128,9 @@ namespace NetNotepad.AuthService.ExternalWorker
             db.RefreshTokens.Where(u => u.UserGuid == userGuid).ExecuteDelete();
             db.SaveChanges();
             Program.EventHandler.Publish(Events.USER_LOGOUT, new UserLogout(userGuid));
-            return new Responce(HttpStatusCode.OK, "USER_LOGOUT");
+            return new Response(HttpStatusCode.OK, "USER_LOGOUT");
         }
-        private static Responce LogoutLRTR(LogoutRTRequest lrtr)
+        private static Response LogoutLRTR(LogoutRTRequest lrtr)
         {
             if (!Program.JWTValidator.Validate(lrtr.JWT, out ClaimsPrincipal principal)) { return ServiceExceptions.INVALID_JWT; }
             Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
@@ -141,10 +141,10 @@ namespace NetNotepad.AuthService.ExternalWorker
                 rtds.Length != tokens.Length) { return ServiceExceptions.NOT_ALL_TOKENS_ARE_VALID; }
             db.RefreshTokens.RemoveRange(rtds);
             db.SaveChanges();
-            return new Responce(HttpStatusCode.OK, "USER_LOGOUT");
+            return new Response(HttpStatusCode.OK, "USER_LOGOUT");
         }
 
-        private static Responce Update(byte[] payload)
+        private static Response Update(byte[] payload)
         {
             return SerializeModule.TryDeserialize(payload, typeof(UpdatePassRequest), typeof(UpdateRTRequest)) switch
             {
@@ -154,7 +154,7 @@ namespace NetNotepad.AuthService.ExternalWorker
             };
         }
 
-        private static Responce UpdatePass(UpdatePassRequest upr)
+        private static Response UpdatePass(UpdatePassRequest upr)
         {
             if (!Program.JWTValidator.Validate(upr.JWT, out ClaimsPrincipal principal)) { return ServiceExceptions.INVALID_JWT; }
             Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
@@ -165,10 +165,10 @@ namespace NetNotepad.AuthService.ExternalWorker
             db.Users.Update(user);
             db.RefreshTokens.Where(u => u.UserGuid == userGuid).ExecuteDelete();
             db.SaveChanges();
-            return new Responce(HttpStatusCode.OK, "PASSWORD_UPDATED");
+            return new Response(HttpStatusCode.OK, "PASSWORD_UPDATED");
         }
 
-        private static Responce UpdateRT(UpdateRTRequest urtr)
+        private static Response UpdateRT(UpdateRTRequest urtr)
         {
             if (!Program.JWTValidator.Validate(urtr.JWT, out ClaimsPrincipal principal)) { return ServiceExceptions.INVALID_JWT; }
             Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
@@ -178,10 +178,10 @@ namespace NetNotepad.AuthService.ExternalWorker
             user = new(user.UserGuid, user.UserLogin, user.PasswordHash, urtr.NewRefreshTokenTTL);
             db.Users.Update(user);
             db.SaveChanges();
-            return new Responce(HttpStatusCode.OK, "TTL_UPDATED");
+            return new Response(HttpStatusCode.OK, "TTL_UPDATED");
         }
 
-        private static Responce User(byte[] payload)
+        private static Response User(byte[] payload)
         {
             UserGetRequest ugr = SerializeModule.Deserialize<UserGetRequest>(payload);
             if (ugr == null) { return ServiceExceptions.BAD_JSON_BODY; }
@@ -189,7 +189,7 @@ namespace NetNotepad.AuthService.ExternalWorker
             Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
             using AppDBContext db = new();
             User user = db.Users.AsNoTracking().First(d => d.UserGuid == userGuid);
-            return new UserGetResponce(HttpStatusCode.OK, "USER_GETTED", user.UserGuid, user.UserLogin, user.RefreshTokenTTL);
+            return new UserGetResponse(HttpStatusCode.OK, "USER_GETTED", user.UserGuid, user.UserLogin, user.RefreshTokenTTL);
         }
     }
 }

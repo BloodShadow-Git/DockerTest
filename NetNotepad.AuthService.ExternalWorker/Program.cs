@@ -18,7 +18,7 @@ namespace NetNotepad.AuthService.ExternalWorker
         public static JWTValidator JWTValidator { get; private set; } = new();
         public static IQueueSpecification HTTPAuthQueue { get; private set; } = null!;
         public static IQueueSpecification InternalAuthQueue { get; private set; } = null!;
-        public static HookRouter<Responce> HTTPHookRouter { get; private set; } = new();
+        public static HookRouter<Response> HTTPHookRouter { get; private set; } = new();
         public static TimeSpan JWTTTL { get; private set; }
 
         public static IDatabase RedisDB { get; private set; } = null!;
@@ -196,7 +196,7 @@ namespace NetNotepad.AuthService.ExternalWorker
                     sr = new("", HttpMethod.Trace, "");
                 }
                 Log.Information("Request {0} with {1}", sr.Path, sr.Method);
-                if (HTTPHookRouter.Route(sr.Path, sr.Method, Encoding.UTF8.GetBytes(sr.Payload), out Responce? responce)) { }
+                if (HTTPHookRouter.Route(sr.Path, sr.Method, Encoding.UTF8.GetBytes(sr.Payload), out Response? responce)) { }
                 else { responce = new ServiceResponce(HttpStatusCode.NotFound, "NOT_FOUND"); }
                 return Task.FromResult(ctx.Message(SerializeModule.Serialize(responce!)));
             }

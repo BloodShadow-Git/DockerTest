@@ -2,10 +2,10 @@ using System.Net;
 
 namespace NetNotepad.Contracts
 {
-    public record Responce(HttpStatusCode HttpCode, string Message);
+    public record Response(HttpStatusCode HttpCode, string Message);
     public record ServiceRequest(string Path, HttpMethod Method, string Payload);
-    public record ServiceResponce(HttpStatusCode HttpCode, string Message) : Responce(HttpCode, Message);
-    public record ServiceErrorResponce(HttpStatusCode HttpCode, string Message, Exception ex) : Responce(HttpCode, Message);
+    public record ServiceResponce(HttpStatusCode HttpCode, string Message) : Response(HttpCode, Message);
+    public record ServiceErrorResponce(HttpStatusCode HttpCode, string Message, Exception ex) : Response(HttpCode, Message);
 
     public record ServiceExceptions(HttpStatusCode Code, string Message)
     {
@@ -17,7 +17,7 @@ namespace NetNotepad.Contracts
         public static readonly ServiceExceptions USER_NOT_EXISTS = new(HttpStatusCode.NotFound, nameof(USER_NOT_EXISTS));
         public static readonly ServiceExceptions NOT_ALL_TOKENS_ARE_VALID = new(HttpStatusCode.BadRequest, nameof(NOT_ALL_TOKENS_ARE_VALID));
 
-        public static implicit operator Responce(ServiceExceptions ex) => new(ex.Code, ex.Message);
-        public static implicit operator ServiceExceptions(Responce resp) => new(resp.HttpCode, resp.Message);
+        public static implicit operator Response(ServiceExceptions ex) => new(ex.Code, ex.Message);
+        public static implicit operator ServiceExceptions(Response resp) => new(resp.HttpCode, resp.Message);
     }
 }
