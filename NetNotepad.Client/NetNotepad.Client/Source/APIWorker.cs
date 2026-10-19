@@ -37,8 +37,6 @@ namespace NetNotepad.Client.Source
             byte[] data = await responseMessage.Content.ReadAsByteArrayAsync();
             if (data.Length <= 0) { throw new Exception("Invalid response"); }
             T? result = SerializeModule.Deserialize<T>(data);
-            if (result is Response sr)
-            { throw new HttpException($"{sr.HttpCode}: {sr.Message}"); }
             if (result == null) { throw new Exception("Invalid response"); }
             return result;
         }

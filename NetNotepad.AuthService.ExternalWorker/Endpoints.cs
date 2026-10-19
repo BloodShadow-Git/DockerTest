@@ -134,7 +134,7 @@ namespace NetNotepad.AuthService.ExternalWorker
         {
             if (!Program.JWTValidator.Validate(lrtr.JWT, out ClaimsPrincipal principal)) { return ServiceExceptions.INVALID_JWT; }
             Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
-            AppDBContext db = new();
+            using AppDBContext db = new();
             Guid[] tokens = [.. lrtr.RefreshTokens.Distinct()];
             RefreshTokenData[] rtds = [.. db.RefreshTokens.Where(d => tokens.Contains(d.DeviceGuid))];
             if (rtds.Any(d => d.UserGuid != userGuid) ||
@@ -158,7 +158,7 @@ namespace NetNotepad.AuthService.ExternalWorker
         {
             if (!Program.JWTValidator.Validate(upr.JWT, out ClaimsPrincipal principal)) { return ServiceExceptions.INVALID_JWT; }
             Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
-            AppDBContext db = new();
+            using AppDBContext db = new();
             User user = db.Users.AsNoTracking().First(d => d.UserGuid == userGuid);
             if (BCrypt.Net.BCrypt.Verify(upr.OldPassword, user.PasswordHash)) { return ServiceExceptions.LOGIN_OR_PASSWORD_IS_INCORRECT; }
             user = new(user.UserGuid, user.UserLogin, BCrypt.Net.BCrypt.HashPassword(upr.NewPassword), user.RefreshTokenTTL);
@@ -172,7 +172,7 @@ namespace NetNotepad.AuthService.ExternalWorker
         {
             if (!Program.JWTValidator.Validate(urtr.JWT, out ClaimsPrincipal principal)) { return ServiceExceptions.INVALID_JWT; }
             Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
-            AppDBContext db = new();
+            using AppDBContext db = new();
             User user = db.Users.AsNoTracking().First(d => d.UserGuid == userGuid);
             if (!BCrypt.Net.BCrypt.Verify(urtr.Password, user.PasswordHash)) { return ServiceExceptions.LOGIN_OR_PASSWORD_IS_INCORRECT; }
             user = new(user.UserGuid, user.UserLogin, user.PasswordHash, urtr.NewRefreshTokenTTL);
