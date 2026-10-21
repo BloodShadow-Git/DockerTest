@@ -1,8 +1,11 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia.Controls.Notifications;
+using Extensions;
 using NetNotepad.Client.Source;
 using NetNotepad.Client.Source.Localization;
 using NetNotepad.Client.Views;
@@ -55,67 +58,61 @@ namespace NetNotepad.Client.ViewModels
             LanguagesItem.Skip(1).Subscribe(LocalizationManager.SetLocalization);
             ThemeSwitch.Subscribe(v => Settings.ThemeSwitcher.Value = v);
 
-            _loginCommand.Subscribe(async _ =>
+            Login.EnableValidation(_ => string.IsNullOrWhiteSpace(Login.Value) ? new ValidationException(LocalizationManager.Localize<string>(PageLocalizations.FIELD_MUST_BE_FILLED_KEY)) : null);
+            Password.EnableValidation(_ => string.IsNullOrWhiteSpace(Login.Value) ? new ValidationException(LocalizationManager.Localize<string>(PageLocalizations.FIELD_MUST_BE_FILLED_KEY)) : null);
+            Host.EnableValidation(_ => string.IsNullOrWhiteSpace(Login.Value) ? new ValidationException(LocalizationManager.Localize<string>(PageLocalizations.FIELD_MUST_BE_FILLED_KEY)) : null);
+
+            Login.Merge(Password).Merge(Host).Subscribe(_ =>
             {
-                try
-                {
-                    if (string.IsNullOrEmpty(Login.Value) ||
-                        string.IsNullOrEmpty(Password.Value) ||
-                        string.IsNullOrEmpty(Host.Value))
-                    {
-                        MainWindow.NM.Show("Please fill all fields", NotificationType.Error);
-                        return;
-                    }
-                    APIWorker.BaseUrl = new(Host.Value);
-                    LoginResponse lr = await APIWorker.Login(new LoginRequest(Login.Value, Password.Value, Remember.Value, APIWorker.CLIENT));
-                    if (lr.HttpCode != HttpStatusCode.OK)
-                    {
-                        MainWindow.NM.Show(new Notification(lr.Message, null, NotificationType.Error, TimeSpan.FromSeconds(3)));
-                        return;
-                    }
-                    UserGetResponse ugr = await APIWorker.GetUser(new(lr.JWT));
-                    if (ugr.HttpCode != HttpStatusCode.OK)
-                    {
-                        MainWindow.NM.Show(new Notification(ugr.Message, null, NotificationType.Error, TimeSpan.FromSeconds(3)));
-                        return;
-                    }
-                    DataManager.UserID userid = new(ugr.UserGuid, Host.Value);
-                    if (DataManager.UserList.ContainsKey(userid)) { DataManager.RemoveUser(userid); }
-                    DataManager.AddUser(new(userid, ugr.UserLogin, DateTime.Now, lr.RefreshToken, lr.CreationDate + ugr.RefreshTokenTTL));
-                }
-                catch (Exception ex) { MainWindow.NM.Show(new Notification("Exception", ex.ToString(), NotificationType.Error)); }
+                bool valid = !string.IsNullOrEmpty(Login.Value) && !string.IsNullOrEmpty(Password.Value) && !string.IsNullOrEmpty(Host.Value);
+                _loginCommand.ChangeCanExecute(valid);
+                _registerCommand.ChangeCanExecute(valid);
             });
-            _registerCommand.Subscribe(async _ =>
+
+            _loginCommand.SubscribeAwait(async (_, ct) => await AuthenticateAsync(async () =>
             {
-                try
-                {
-                    if (string.IsNullOrEmpty(Login.Value) ||
-                        string.IsNullOrEmpty(Password.Value) ||
-                        string.IsNullOrEmpty(Host.Value))
-                    {
-                        MainWindow.NM.Show("Please fill all fields", NotificationType.Error);
-                        return;
-                    }
-                    APIWorker.BaseUrl = new(Host.Value);
-                    RegisterResponse rr = await APIWorker.Register(new RegisterRequest(Login.Value, Password.Value, Remember.Value, APIWorker.CLIENT));
-                    if (rr.HttpCode != HttpStatusCode.OK)
-                    {
-                        MainWindow.NM.Show(new Notification(rr.Message, null, NotificationType.Error, TimeSpan.FromSeconds(3)));
-                        return;
-                    }
-                    UserGetResponse ugr = await APIWorker.GetUser(new(rr.JWT));
-                    if (ugr.HttpCode != HttpStatusCode.OK)
-                    {
-                        MainWindow.NM.Show(new Notification(ugr.Message, null, NotificationType.Error, TimeSpan.FromSeconds(3)));
-                        return;
-                    }
-                    DataManager.UserID userid = new(ugr.UserGuid, Host.Value);
-                    if (DataManager.UserList.ContainsKey(userid)) { DataManager.RemoveUser(userid); }
-                    DataManager.AddUser(new(userid, ugr.UserLogin, DateTime.Now, rr.RefreshToken, rr.CreationDate + ugr.RefreshTokenTTL));
-                }
-                catch (Exception ex) { MainWindow.NM.Show(new Notification("Exception", ex.ToString(), NotificationType.Error)); }
-            });
+                var r = await APIWorker.Login(new LoginRequest(Login.Value, Password.Value, Remember.Value, APIWorker.CLIENT));
+                return new AuthResult(r.HttpCode, r.Message, r.JWT, r.RefreshToken, r.CreationDate);
+            }, PageLocalizations.SUCCESS_LOGIN_KEY), AwaitOperation.Drop);
+            _registerCommand.SubscribeAwait(async (_, ct) => await AuthenticateAsync(async () =>
+            {
+                var r = await APIWorker.Register(new RegisterRequest(Login.Value, Password.Value, Remember.Value, APIWorker.CLIENT));
+                return new AuthResult(r.HttpCode, r.Message, r.JWT, r.RefreshToken, r.CreationDate);
+            }, PageLocalizations.SUCCESS_REGISTER_KEY), AwaitOperation.Drop);
         }
+
+        private async Task AuthenticateAsync(Func<Task<AuthResult>> authCall, string successKey)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(Login.Value) ||
+                    string.IsNullOrEmpty(Password.Value) ||
+                    string.IsNullOrEmpty(Host.Value))
+                {
+                    MainWindow.NM.Show("Please fill all fields", NotificationType.Error);
+                    return;
+                }
+
+                APIWorker.BaseUrl = new(Host.Value);
+
+                AuthResult auth = await authCall();
+                if (auth.HttpCode != HttpStatusCode.OK) { auth.Show(NotificationType.Error); return; }
+                UserGetResponse ugr = await APIWorker.GetUser(new(auth.JWT));
+                if (ugr.HttpCode != HttpStatusCode.OK) { auth.Show(NotificationType.Error); return; }
+
+                DataManager.UserID userid = new(ugr.UserGuid, Host.Value);
+                if (DataManager.UserList.ContainsKey(userid)) { DataManager.RemoveUser(userid); }
+                DataManager.UserProfile profile = new(userid, ugr.UserLogin, DateTime.Now, auth.RefreshToken, auth.CreationDate + ugr.RefreshTokenTTL);
+                DataManager.AddUser(profile);
+
+                MainWindow.NM.Show(new Notification(LocalizationManager.Localize<string>(successKey), null, NotificationType.Success));
+                DataManager.SelectUser(profile.UserID);
+                await MainWindow.NP.PushAsync(new UserPage());
+            }
+            catch (Exception ex) { MainWindow.NM.Show(new Notification("Exception", ex.ToString(), NotificationType.Error)); }
+        }
+
+        private record AuthResult(HttpStatusCode HttpCode, string Message, string JWT, string RefreshToken, DateTime CreationDate) : Response(HttpCode, Message);
     }
 
     public static partial class PageLocalizations
@@ -126,5 +123,9 @@ namespace NetNotepad.Client.ViewModels
         public const string ENTER_KEY = nameof(ENTER_KEY);
         public const string HOST_PL = nameof(HOST_PL);
         public const string REGISTER_KEY = nameof(REGISTER_KEY);
+        public const string SUCCESS_LOGIN_KEY = nameof(SUCCESS_LOGIN_KEY);
+        public const string SUCCESS_REGISTER_KEY = nameof(SUCCESS_REGISTER_KEY);
+        public const string PLEASE_FILL_ALL_FIELDS_KEY = nameof(PLEASE_FILL_ALL_FIELDS_KEY);
+        public const string FIELD_MUST_BE_FILLED_KEY = nameof(FIELD_MUST_BE_FILLED_KEY);
     }
 }

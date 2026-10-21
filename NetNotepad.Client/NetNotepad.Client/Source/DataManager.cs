@@ -7,12 +7,13 @@ namespace NetNotepad.Client.Source
 {
     public static class DataManager
     {
-        public static ReactiveProperty<UserID> Selecteduser { get; } = new();
+        public static ReadOnlyReactiveProperty<UserID> SelectedUser => _selectedUser;
         public static IReadOnlyObservableDictionary<UserID, UserProfile> UserList => _userList;
         public static ISynchronizedView<KeyValuePair<string, int>, string> HostList { get; }
 
         private static ObservableDictionary<UserID, UserProfile> _userList = [];
         private static ObservableDictionary<string, int> _hostList = [];
+        private static ReactiveProperty<UserID> _selectedUser = new();
 
         static DataManager()
         {
@@ -32,14 +33,16 @@ namespace NetNotepad.Client.Source
             });
         }
 
-        public static void LoadUsers(params UserProfile[] profiles) { foreach (UserProfile profile in profiles) { AddUser(profile); } }
-        public static void AddUser(UserProfile profile) { if (ValidateProfile(profile)) { _userList.Add(profile.UserID, profile); } }
-        public static void RemoveUser(UserID userID) { if (ValidateProfile(userID)) { _userList.Remove(userID); } }
+        public static void LoadUsers(params UserProfile?[] profiles) { foreach (UserProfile? profile in profiles) { AddUser(profile); } }
+        public static void AddUser(UserProfile? profile) { if (ValidateProfile(profile)) { _userList.Add(profile!.UserID, profile); } }
+        public static void RemoveUser(UserID? userID) { if (ValidateProfile(userID)) { _userList.Remove(userID!); } }
+        public static void UpdateUser(UserProfile? profile) { if (ValidateProfile(profile)) { _userList[profile!.UserID] = profile; } }
+        public static void SelectUser(UserID? userID) { if (ValidateProfile(userID)) { _selectedUser.Value = userID!; } }
 
-        private static bool ValidateProfile(UserProfile profile) => ValidateProfile(profile.UserID) &&
+        private static bool ValidateProfile(UserProfile? profile) => profile != null && ValidateProfile(profile.UserID) &&
             !string.IsNullOrEmpty(profile.UserLogin) &&
             !string.IsNullOrEmpty(profile.RefreshTokenKey);
-        private static bool ValidateProfile(UserID id) => id.UserGuid != Guid.Empty && !string.IsNullOrEmpty(id.UserServer);
+        private static bool ValidateProfile(UserID? id) => id != null && id.UserGuid != Guid.Empty && !string.IsNullOrEmpty(id.UserServer);
 
         public record UserProfile(UserID UserID, string UserLogin, DateTime LastLogin, string RefreshTokenKey, DateTime PasswordDate);
         public record UserID(Guid UserGuid, string UserServer);

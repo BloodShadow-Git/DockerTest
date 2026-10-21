@@ -6,7 +6,7 @@ namespace NetNotepad.Client.Source
 
         public static void Save(string path, object data) => Instance.SaveInternal(path, data);
         public static T? Load<T>(string path) => Instance.LoadInternal<T>(path);
-        public static void Delete(string path) => Instance.DeleteInternal(path);
+        public static void Remove(string path) => Instance.DeleteInternal(path);
         public static bool Exists(string path) => Instance.ExistsInternal(path);
 
         protected abstract void SaveInternal(string path, object data);

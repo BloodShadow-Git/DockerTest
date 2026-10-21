@@ -15,12 +15,12 @@ namespace NetNotepad.Client.ViewModels
         public NotifyCollectionChangedSynchronizedViewList<string> Languages { get; } = LocalizationManager.AvailableLocalizations.ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
         public BindableReactiveProperty<bool> ThemeSwitch { get; } = Settings.ThemeSwitcher.ToBindableReactiveProperty();
         public NotifyCollectionChangedSynchronizedViewList<UserProfileView> UserList { get; }
-        public ICommand TestCommand => _testCommand;
-        public ICommand TostCommand => _tostCommand;
+        public ICommand EnterCommand => _enterCommand;
+        public ICommand RemoveCommand => _removeCommand;
 
         private ObservableList<UserProfileView> _userList = [];
-        private ReactiveCommand<UserProfileView> _testCommand = new();
-        private ReactiveCommand<UserProfileView> _tostCommand = new();
+        private ReactiveCommand<UserProfileView> _enterCommand = new();
+        private ReactiveCommand<UserProfileView> _removeCommand = new();
 
         public AccountSelectPageModel()
         {
@@ -32,14 +32,18 @@ namespace NetNotepad.Client.ViewModels
 
             LanguagesItem.Skip(1).Subscribe(LocalizationManager.SetLocalization);
             ThemeSwitch.Subscribe(v => Settings.ThemeSwitcher.Value = v);
-            _testCommand.Subscribe(async _ =>
-            {
-                await MainWindow.NP.PushAsync(new NewLoginPage());
-            });
-            _tostCommand.Subscribe(async _ =>
-            {
-                await MainWindow.NP.PushAsync(new UserPage());
-            });
+            _enterCommand.Subscribe(Enter);
+            _removeCommand.Subscribe(Remove);
+        }
+
+        private async void Enter(UserProfileView upv)
+        {
+            if (upv.UserID.Value.UserGuid == null) { }
+            await MainWindow.NP.PushAsync(new NewLoginPage());
+        }
+        private async void Remove(UserProfileView upv)
+        {
+            await MainWindow.NP.PushAsync(new UserPage());
         }
     }
 
@@ -57,6 +61,9 @@ namespace NetNotepad.Client.ViewModels
         private BindableReactiveProperty<string> _refreshTokenKey = new();
         private BindableReactiveProperty<string> _passwordDate = new();
 
+        private DateTime _lastLoginF;
+        private DateTime _passwordDateF;
+
         public UserProfileView(UserIDView? UserID, string? UserLogin, DateTime? LastLogin, string? RefreshTokenKey, DateTime? PasswordDate)
         {
             if (UserID != null) { _userID.Value = (UserIDView)UserID; }
@@ -68,18 +75,21 @@ namespace NetNotepad.Client.ViewModels
             }
             if (LastLogin != null)
             {
+                _lastLoginF = (DateTime)LastLogin;
                 var _lastLoginLocal = _lastLogin;
                 LocalizationManager.CurrentLocalization.Subscribe(_ => { _lastLoginLocal.Value = string.Format("{0}: {1:dd.MM.yyyy HH:mm}", LocalizationManager.Localize<string>(PageLocalizations.LAST_LOGIN), LastLogin); });
             }
             if (RefreshTokenKey != null) { _refreshTokenKey.Value = RefreshTokenKey; }
             if (PasswordDate != null)
             {
+                _passwordDateF = (DateTime)PasswordDate;
                 var _passwordDateLocal = _passwordDate;
                 LocalizationManager.CurrentLocalization.Subscribe(_ => { _passwordDateLocal.Value = string.Format("{0}: {1:dd.MM.yyyy HH:mm}", LocalizationManager.Localize<string>(PageLocalizations.PASSWORD_REQUIRED_AT), PasswordDate); });
             }
         }
 
         public static implicit operator UserProfileView(UserProfile? up) => new(up?.UserID, up?.UserLogin, up?.LastLogin, up?.RefreshTokenKey, up?.PasswordDate);
+        public static implicit operator UserProfile(UserProfileView? upv) => new(upv?.UserID.Value, upv?.UserLogin.Value!, (DateTime)upv?._lastLoginF!, upv?.RefreshTokenKey.Value!, (DateTime)upv?._passwordDateF!);
     }
     public struct UserIDView
     {
@@ -95,6 +105,7 @@ namespace NetNotepad.Client.ViewModels
         }
 
         public static implicit operator UserIDView(UserID? id) => new(id?.UserGuid, id?.UserServer);
+        public static implicit operator UserID(UserIDView? idv) => new((Guid)idv?.UserGuid.Value!, idv?.UserServer.Value!);
     }
 
     public static partial class PageLocalizations

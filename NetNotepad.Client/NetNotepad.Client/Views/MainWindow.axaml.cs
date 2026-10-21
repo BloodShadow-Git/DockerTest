@@ -34,20 +34,33 @@ public partial class MainWindow : Window
         if (localizationDatas.Length <= 0) { LocalizationManager.AddLocalization(GenerateLocalizationData()); }
         LocalizationManager.AddLocalization(localizationDatas);
 
-        string profilesDir = "Profiles";
-        DataManager.LoadUsers(FileSystem.LoadAll<UserProfile>(profilesDir, "*.json"));
-        DataManager.UserList.ObserveAdd().Subscribe(e => { FileSystem.Save(profilesDir + GenerateName(e.Value.Key), e.Value.Value); });
-        DataManager.UserList.ObserveRemove().Subscribe(e => { FileSystem.Remove(profilesDir + GenerateName(e.Value.Key)); });
+        string tokensFile = "token.list";
+        List<string> tokensList = [.. (FileSystem.Load<string[]>(tokensFile) ?? [])];
+        DataManager.LoadUsers([.. tokensList.Select(e => TokenStore.Load<UserProfile>(e))]);
+        DataManager.UserList.ObserveAdd().Subscribe(e =>
+        {
+            string name = GenerateName(e.Value.Key);
+            TokenStore.Save(name, e.Value.Value);
+            tokensList.Add(name);
+            FileSystem.Save(tokensFile, tokensList);
+        });
+        DataManager.UserList.ObserveRemove().Subscribe(e =>
+        {
+            string name = GenerateName(e.Value.Key);
+            TokenStore.Remove(name);
+            tokensList.Remove(name);
+            FileSystem.Save(tokensFile, tokensList);
+        });
 
         InitializeComponent();
         NP = NavigationPage;
         NM = NotificationManager;
     }
 
-    private static LocalizationData GenerateLocalizationData() => new("test-Test", [.. GetLocalizationKeys().Select(x => new LocalizationPair<string>(x, x))]);
+    private static LocalizationData GenerateLocalizationData() => new("test-TEST", [.. GetLocalizationKeys().Select(x => new LocalizationPair<string>(x, x))]);
     private static IEnumerable<string> GetLocalizationKeys() => typeof(PageLocalizations).GetFields(BindingFlags.Public | BindingFlags.Static)
                                                                     .Where(x => x.IsLiteral && x.FieldType == typeof(string))
                                                                     .Select(x => x.GetRawConstantValue()?.ToString() ?? "null")
                                                                     .OrderBy(x => x);
-    private static string GenerateName(UserID userID) => $"{userID.UserServer.Replace('.', '-').Replace(':', '-')}_{userID.UserGuid}";
+    private static string GenerateName(UserID userID) => $"Profiles/{new Uri(userID.UserServer).Host}_{userID.UserGuid}";
 }
