@@ -102,7 +102,7 @@ namespace NetNotepad.Client.ViewModels
 
                 DataManager.UserID userid = new(ugr.UserGuid, Host.Value);
                 if (DataManager.UserList.ContainsKey(userid)) { DataManager.RemoveUser(userid); }
-                DataManager.UserProfile profile = new(userid, ugr.UserLogin, DateTime.Now, auth.RefreshToken, auth.CreationDate + ugr.RefreshTokenTTL, auth.DeviceGuid);
+                DataManager.UserProfile profile = new(userid, ugr.UserLogin, DateTime.Now, auth.RefreshToken, auth.DeviceGuid);
                 DataManager.AddUser(profile);
 
                 MainWindow.NM.Show(new Notification(LocalizationManager.Localize<string>(successKey), null, NotificationType.Success));
