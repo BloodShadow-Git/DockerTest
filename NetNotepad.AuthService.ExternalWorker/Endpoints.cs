@@ -135,7 +135,7 @@ namespace NetNotepad.AuthService.ExternalWorker
             if (!Program.JWTValidator.Validate(lrtr.JWT, out ClaimsPrincipal principal)) { return ServiceExceptions.INVALID_JWT; }
             Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
             using AppDBContext db = new();
-            Guid[] tokens = [.. lrtr.RefreshTokens.Distinct()];
+            Guid[] tokens = [.. lrtr.DeviceGUIDs.Distinct()];
             RefreshTokenData[] rtds = [.. db.RefreshTokens.Where(d => tokens.Contains(d.DeviceGuid))];
             if (rtds.Any(d => d.UserGuid != userGuid) ||
                 rtds.Length != tokens.Length) { return ServiceExceptions.NOT_ALL_TOKENS_ARE_VALID; }

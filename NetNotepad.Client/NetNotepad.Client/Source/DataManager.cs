@@ -44,7 +44,7 @@ namespace NetNotepad.Client.Source
             !string.IsNullOrEmpty(profile.RefreshTokenKey);
         private static bool ValidateProfile(UserID? id) => id != null && id.UserGuid != Guid.Empty && !string.IsNullOrEmpty(id.UserServer);
 
-        public record UserProfile(UserID UserID, string UserLogin, DateTime LastLogin, string RefreshTokenKey, DateTime PasswordDate);
+        public record UserProfile(UserID UserID, string UserLogin, DateTime LastLogin, string RefreshTokenKey, Guid DeviceGuid);
         public record UserID(Guid UserGuid, string UserServer);
     }
 }

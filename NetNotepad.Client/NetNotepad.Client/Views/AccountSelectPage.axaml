@@ -60,8 +60,6 @@
                                                    HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" IsHitTestVisible="False"/>
                                         <TextBlock Text="{Binding LastLogin.Value}"
                                                    HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" IsHitTestVisible="False"/>
-                                        <TextBlock Text="{Binding PasswordDate.Value}"
-                                                   HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" IsHitTestVisible="False"/>
                                     </StackPanel>
                                 </Grid>
                             </DataTemplate>

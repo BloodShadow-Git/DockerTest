@@ -71,13 +71,13 @@ namespace NetNotepad.Client.ViewModels
 
             _loginCommand.SubscribeAwait(async (_, ct) => await AuthenticateAsync(async () =>
             {
-                var r = await APIWorker.Login(new LoginRequest(Login.Value, Password.Value, Remember.Value, APIWorker.CLIENT));
-                return new AuthResult(r.HttpCode, r.Message, r.JWT, r.RefreshToken, r.CreationDate);
+                LoginResponse lr = await APIWorker.Login(new LoginRequest(Login.Value, Password.Value, Remember.Value, APIWorker.CLIENT));
+                return new AuthResult(lr.HttpCode, lr.Message, lr.JWT, lr.RefreshToken, lr.CreationDate, lr.DeviceGuid);
             }, PageLocalizations.SUCCESS_LOGIN_KEY), AwaitOperation.Drop);
             _registerCommand.SubscribeAwait(async (_, ct) => await AuthenticateAsync(async () =>
             {
-                var r = await APIWorker.Register(new RegisterRequest(Login.Value, Password.Value, Remember.Value, APIWorker.CLIENT));
-                return new AuthResult(r.HttpCode, r.Message, r.JWT, r.RefreshToken, r.CreationDate);
+                RegisterResponse rr = await APIWorker.Register(new RegisterRequest(Login.Value, Password.Value, Remember.Value, APIWorker.CLIENT));
+                return new AuthResult(rr.HttpCode, rr.Message, rr.JWT, rr.RefreshToken, rr.CreationDate, rr.DeviceGuid);
             }, PageLocalizations.SUCCESS_REGISTER_KEY), AwaitOperation.Drop);
         }
 
@@ -102,17 +102,18 @@ namespace NetNotepad.Client.ViewModels
 
                 DataManager.UserID userid = new(ugr.UserGuid, Host.Value);
                 if (DataManager.UserList.ContainsKey(userid)) { DataManager.RemoveUser(userid); }
-                DataManager.UserProfile profile = new(userid, ugr.UserLogin, DateTime.Now, auth.RefreshToken, auth.CreationDate + ugr.RefreshTokenTTL);
+                DataManager.UserProfile profile = new(userid, ugr.UserLogin, DateTime.Now, auth.RefreshToken, auth.CreationDate + ugr.RefreshTokenTTL, auth.DeviceGuid);
                 DataManager.AddUser(profile);
 
                 MainWindow.NM.Show(new Notification(LocalizationManager.Localize<string>(successKey), null, NotificationType.Success));
                 DataManager.SelectUser(profile.UserID);
-                await MainWindow.NP.PushAsync(new UserPage());
+                await MainWindow.NP.PopToRootAsync();
+                MainWindow.NP.InsertPage(new UserPage(), MainWindow.NP.CurrentPage!);
             }
             catch (Exception ex) { MainWindow.NM.Show(new Notification("Exception", ex.ToString(), NotificationType.Error)); }
         }
 
-        private record AuthResult(HttpStatusCode HttpCode, string Message, string JWT, string RefreshToken, DateTime CreationDate) : Response(HttpCode, Message);
+        private record AuthResult(HttpStatusCode HttpCode, string Message, string JWT, string RefreshToken, DateTime CreationDate, Guid DeviceGuid) : Response(HttpCode, Message);
     }
 
     public static partial class PageLocalizations

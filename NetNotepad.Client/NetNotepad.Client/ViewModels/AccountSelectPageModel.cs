@@ -1,8 +1,12 @@
 using System;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using NetNotepad.Client.Source;
 using NetNotepad.Client.Source.Localization;
 using NetNotepad.Client.Views;
+using NetNotepad.Contracts;
 using ObservableCollections;
 using R3;
 using static NetNotepad.Client.Source.DataManager;
@@ -28,22 +32,44 @@ namespace NetNotepad.Client.ViewModels
             _userList.Add(new(null, null, null, null, null));
             foreach ((_, UserProfile profile) in DataManager.UserList) { _userList.Insert(_userList.Count - 1, profile); }
             DataManager.UserList.ObserveAdd().Subscribe(e => { _userList.Insert(_userList.Count - 1, e.Value.Value); });
-            DataManager.UserList.ObserveRemove().Subscribe(e => { _userList.Remove(e.Value.Value); });
+            DataManager.UserList.ObserveRemove().Subscribe(e => { _userList.Remove(_userList.FirstOrDefault(x => x.UserID.Value.UserGuid.Value == e.Value.Value.UserID.UserGuid)); });
 
             LanguagesItem.Skip(1).Subscribe(LocalizationManager.SetLocalization);
             ThemeSwitch.Subscribe(v => Settings.ThemeSwitcher.Value = v);
-            _enterCommand.Subscribe(Enter);
-            _removeCommand.Subscribe(Remove);
+            _enterCommand.SubscribeAwait(async (e, _) => { await Enter(e); }, AwaitOperation.Drop);
+            _removeCommand.SubscribeAwait(async (e, _) => { await Remove(e); }, AwaitOperation.Drop);
         }
 
-        private async void Enter(UserProfileView upv)
+        private async Task Enter(UserProfileView upv)
         {
-            if (upv.UserID.Value.UserGuid == null) { }
-            await MainWindow.NP.PushAsync(new NewLoginPage());
+            if (upv.UserID.Value.UserGuid == null)
+            {
+                await MainWindow.NP.PushAsync(new NewLoginPage());
+                return;
+            }
+            APIWorker.BaseUrl = new(upv.UserID.Value.UserServer.Value);
+            LoginResponse lr = await APIWorker.Login(new LoginRTRequest(upv.RefreshTokenKey.Value, APIWorker.CLIENT));
+            DataManager.UpdateUser(new(upv.UserID.Value, upv.UserLogin.Value, DateTime.Now, lr.RefreshToken, lr.DeviceGuid));
+            if (lr.HttpCode != HttpStatusCode.OK)
+            {
+                await MainWindow.NP.PushAsync(new NewLoginPage());
+                return;
+            }
+            DataManager.SelectUser(upv.UserID.Value);
+            await MainWindow.NP.PopToRootAsync();
+            MainWindow.NP.InsertPage(new UserPage(), MainWindow.NP.CurrentPage!);
         }
-        private async void Remove(UserProfileView upv)
+        private async Task Remove(UserProfileView upv)
         {
-            await MainWindow.NP.PushAsync(new UserPage());
+            if (upv.UserID.Value.UserGuid == null)
+            {
+                await MainWindow.NP.PushAsync(new NewLoginPage());
+                return;
+            }
+            APIWorker.BaseUrl = new(upv.UserID.Value.UserServer.Value);
+            LoginResponse lr = await APIWorker.Login(new LoginRTRequest(upv.RefreshTokenKey.Value, APIWorker.CLIENT));
+            if (lr.HttpCode == HttpStatusCode.OK) { await APIWorker.Logout(new LogoutRTRequest(lr.JWT, upv.DeviceGuid)); }
+            DataManager.RemoveUser(upv.UserID.Value);
         }
     }
 
@@ -53,18 +79,17 @@ namespace NetNotepad.Client.ViewModels
         public readonly IReadOnlyBindableReactiveProperty<string> UserLogin => _userLogin;
         public readonly IReadOnlyBindableReactiveProperty<string> LastLogin => _lastLogin;
         public readonly IReadOnlyBindableReactiveProperty<string> RefreshTokenKey => _refreshTokenKey;
-        public readonly IReadOnlyBindableReactiveProperty<string> PasswordDate => _passwordDate;
 
         private BindableReactiveProperty<UserIDView> _userID = new();
         private BindableReactiveProperty<string> _userLogin = new();
         private BindableReactiveProperty<string> _lastLogin = new();
         private BindableReactiveProperty<string> _refreshTokenKey = new();
-        private BindableReactiveProperty<string> _passwordDate = new();
+
+        public readonly Guid DeviceGuid;
 
         private DateTime _lastLoginF;
-        private DateTime _passwordDateF;
 
-        public UserProfileView(UserIDView? UserID, string? UserLogin, DateTime? LastLogin, string? RefreshTokenKey, DateTime? PasswordDate)
+        public UserProfileView(UserIDView? UserID, string? UserLogin, DateTime? LastLogin, string? RefreshTokenKey, Guid? DeviceGuid)
         {
             if (UserID != null) { _userID.Value = (UserIDView)UserID; }
             if (UserLogin != null) { _userLogin.Value = UserLogin; }
@@ -80,16 +105,11 @@ namespace NetNotepad.Client.ViewModels
                 LocalizationManager.CurrentLocalization.Subscribe(_ => { _lastLoginLocal.Value = string.Format("{0}: {1:dd.MM.yyyy HH:mm}", LocalizationManager.Localize<string>(PageLocalizations.LAST_LOGIN), LastLogin); });
             }
             if (RefreshTokenKey != null) { _refreshTokenKey.Value = RefreshTokenKey; }
-            if (PasswordDate != null)
-            {
-                _passwordDateF = (DateTime)PasswordDate;
-                var _passwordDateLocal = _passwordDate;
-                LocalizationManager.CurrentLocalization.Subscribe(_ => { _passwordDateLocal.Value = string.Format("{0}: {1:dd.MM.yyyy HH:mm}", LocalizationManager.Localize<string>(PageLocalizations.PASSWORD_REQUIRED_AT), PasswordDate); });
-            }
+            if (DeviceGuid != null) { this.DeviceGuid = (Guid)DeviceGuid; }
         }
 
-        public static implicit operator UserProfileView(UserProfile? up) => new(up?.UserID, up?.UserLogin, up?.LastLogin, up?.RefreshTokenKey, up?.PasswordDate);
-        public static implicit operator UserProfile(UserProfileView? upv) => new(upv?.UserID.Value, upv?.UserLogin.Value!, (DateTime)upv?._lastLoginF!, upv?.RefreshTokenKey.Value!, (DateTime)upv?._passwordDateF!);
+        public static implicit operator UserProfileView(UserProfile? up) => new(up?.UserID, up?.UserLogin, up?.LastLogin, up?.RefreshTokenKey, up?.DeviceGuid);
+        public static implicit operator UserProfile(UserProfileView? upv) => new(upv?.UserID.Value, upv?.UserLogin.Value!, (DateTime)upv?._lastLoginF!, upv?.RefreshTokenKey.Value!, (Guid)upv?.DeviceGuid!);
     }
     public struct UserIDView
     {
@@ -112,6 +132,5 @@ namespace NetNotepad.Client.ViewModels
     {
         public const string ADD_USER = nameof(ADD_USER);
         public const string LAST_LOGIN = nameof(LAST_LOGIN);
-        public const string PASSWORD_REQUIRED_AT = nameof(PASSWORD_REQUIRED_AT);
     }
 }

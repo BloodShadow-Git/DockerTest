@@ -1,4 +1,5 @@
 using Serilog;
+using Serilog.Formatting.Compact;
 
 namespace NetNotepad.ServiceBase
 {
