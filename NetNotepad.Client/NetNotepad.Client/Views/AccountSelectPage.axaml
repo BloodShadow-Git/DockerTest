@@ -68,6 +68,23 @@
                 </ScrollViewer>
             </Border>
         </Grid>
+        <Border Grid.RowSpan="3" Background="#7F000000" IsVisible="{Binding ShowPasswordPanel.Value}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="1*" />
+                    <RowDefinition Height="2*" />
+                    <RowDefinition Height="1*" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="1*" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.Row="1" Grid.Column="1" Margin="25" Padding="25" CornerRadius="25" Background="{DynamicResource MenuFlyoutItemBackgroundPressed}">
+                    <Button Content="Test" />
+                </Border>
+            </Grid>
+        </Border>
         <ToggleButton Grid.Row="0" IsChecked="{Binding ThemeSwitch.Value}"
                       HorizontalAlignment="Right" VerticalAlignment="Top" Margin="25">
             <Image Stretch="Uniform" Width="32"

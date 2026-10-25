@@ -3,6 +3,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Avalonia.Controls.Notifications;
 using NetNotepad.Client.Source;
 using NetNotepad.Client.Source.Localization;
 using NetNotepad.Client.Views;
@@ -21,10 +22,12 @@ namespace NetNotepad.Client.ViewModels
         public NotifyCollectionChangedSynchronizedViewList<UserProfileView> UserList { get; }
         public ICommand EnterCommand => _enterCommand;
         public ICommand RemoveCommand => _removeCommand;
+        public IReadOnlyBindableReactiveProperty<bool> ShowPasswordPanel => _showPasswordPanel;
 
         private ObservableList<UserProfileView> _userList = [];
         private ReactiveCommand<UserProfileView> _enterCommand = new();
         private ReactiveCommand<UserProfileView> _removeCommand = new();
+        private BindableReactiveProperty<bool> _showPasswordPanel = new(false);
 
         public AccountSelectPageModel()
         {
@@ -52,7 +55,14 @@ namespace NetNotepad.Client.ViewModels
             DataManager.UpdateUser(new(upv.UserID.Value, upv.UserLogin.Value, DateTime.Now, lr.RefreshToken, lr.DeviceGuid));
             if (lr.HttpCode != HttpStatusCode.OK)
             {
-                await MainWindow.NP.PushAsync(new NewLoginPage());
+                if (lr.Message == ServiceExceptions.USER_NOT_EXISTS.Message)
+                {
+                    MainWindow.NM.Show(new Notification(LocalizationManager.Localize<string>(ServiceExceptions.USER_NOT_EXISTS.Message), null, NotificationType.Error));
+                    await Remove(upv);
+                    return;
+                }
+                _showPasswordPanel.Value = true;
+
                 return;
             }
             DataManager.SelectUser(upv.UserID.Value);
@@ -132,5 +142,6 @@ namespace NetNotepad.Client.ViewModels
     {
         public const string ADD_USER = nameof(ADD_USER);
         public const string LAST_LOGIN = nameof(LAST_LOGIN);
+        public const string PASSWORD_REQUIRED = nameof(PASSWORD_REQUIRED);
     }
 }

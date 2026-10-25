@@ -7,6 +7,7 @@ using Avalonia.Controls.Notifications;
 using NetNotepad.Client.Source;
 using NetNotepad.Client.Source.Localization;
 using NetNotepad.Client.ViewModels;
+using NetNotepad.Contracts;
 using ObservableCollections;
 using R3;
 using static NetNotepad.Client.Source.DataManager;
@@ -58,9 +59,22 @@ public partial class MainWindow : Window
     }
 
     private static LocalizationData GenerateLocalizationData() => new("test-TEST", [.. GetLocalizationKeys().Select(x => new LocalizationPair<string>(x, x))]);
-    private static IEnumerable<string> GetLocalizationKeys() => typeof(PageLocalizations).GetFields(BindingFlags.Public | BindingFlags.Static)
-                                                                    .Where(x => x.IsLiteral && x.FieldType == typeof(string))
-                                                                    .Select(x => x.GetRawConstantValue()?.ToString() ?? "null")
+    private static IEnumerable<string> GetLocalizationKeys() => GetPageLocalizationFields()
+                                                                    .Concat(GetServiceExceptionFields())
                                                                     .OrderBy(x => x);
+
+    private static IEnumerable<string> GetPageLocalizationFields()
+    {
+        return typeof(PageLocalizations).GetFields(BindingFlags.Public | BindingFlags.Static)
+                    .Where(x => x.IsLiteral && x.FieldType == typeof(string))
+                    .Select(x => x.GetRawConstantValue()?.ToString() ?? "null");
+    }
+    private static IEnumerable<string> GetServiceExceptionFields()
+    {
+        return typeof(ServiceExceptions).GetFields(BindingFlags.Public | BindingFlags.Static)
+                    .Where(x => x.FieldType == typeof(ServiceExceptions))
+                    .Select(x => (x.GetValue(null) as ServiceExceptions)?.Message ?? "null");
+    }
+
     private static string GenerateName(UserID userID) => $"Profiles/{new Uri(userID.UserServer).Host}_{userID.UserGuid}";
 }

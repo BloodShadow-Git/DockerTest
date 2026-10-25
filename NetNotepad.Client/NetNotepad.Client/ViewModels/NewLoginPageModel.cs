@@ -89,10 +89,9 @@ namespace NetNotepad.Client.ViewModels
                     string.IsNullOrEmpty(Password.Value) ||
                     string.IsNullOrEmpty(Host.Value))
                 {
-                    MainWindow.NM.Show("Please fill all fields", NotificationType.Error);
+                    MainWindow.NM.Show(LocalizationManager.Localize<string>(PageLocalizations.PLEASE_FILL_ALL_FIELDS_KEY), NotificationType.Error);
                     return;
                 }
-
                 APIWorker.BaseUrl = new(Host.Value);
 
                 AuthResult auth = await authCall();

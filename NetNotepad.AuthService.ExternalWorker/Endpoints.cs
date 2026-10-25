@@ -33,7 +33,7 @@ namespace NetNotepad.AuthService.ExternalWorker
         {
             using AppDBContext db = new();
             User? user = db.Users.AsNoTracking().FirstOrDefault(d => d.UserLogin == lr.Login);
-            if (user == null) { return ServiceExceptions.LOGIN_OR_PASSWORD_IS_INCORRECT; }
+            if (user == null) { return ServiceExceptions.USER_NOT_EXISTS; }
             if (!BCrypt.Net.BCrypt.Verify(lr.Password, user.PasswordHash)) { return ServiceExceptions.LOGIN_OR_PASSWORD_IS_INCORRECT; }
             RefreshTokenData rtd = GenerateTokens(user, lr.Persistent, lr.DeviceName);
             db.RefreshTokens.Add(rtd);

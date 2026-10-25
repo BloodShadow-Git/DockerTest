@@ -58,25 +58,11 @@ namespace NetNotepad.ServiceBase
 
         private static void ValidateClaims(ClaimsPrincipal principal)
         {
-            string? sub =
-                principal.FindFirst(JWTNames.SUB)?.Value;
-
-            if (string.IsNullOrEmpty(sub))
-                throw new SecurityTokenException(
-                    "Missing subject");
-
-
-            if (!Guid.TryParse(sub, out _))
-                throw new SecurityTokenException(
-                    "Invalid user guid");
-
-
-            string? jti =
-                principal.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
-
-            if (string.IsNullOrEmpty(jti))
-                throw new SecurityTokenException(
-                    "Missing jti");
+            string? sub = principal.FindFirst(JWTNames.SUB)?.Value;
+            if (string.IsNullOrEmpty(sub)) { throw new SecurityTokenException("Missing subject"); }
+            if (!Guid.TryParse(sub, out _)) { throw new SecurityTokenException("Invalid user guid"); }
+            string? jti = principal.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+            if (string.IsNullOrEmpty(jti)) { throw new SecurityTokenException("Missing jti"); }
         }
     }
 }

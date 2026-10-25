@@ -4,9 +4,9 @@ namespace NetNotepad.Contracts
 {
     public static class JWTNames
     {
-        public static readonly string SUB = "UserGUID";
-        public static readonly string ISS = "AuthService";
-        public static readonly string AUD = "Services";
+        public const string SUB = "UserGUID";
+        public const string ISS = "AuthService";
+        public const string AUD = "Services";
     }
 
     public record LoginRequest(string Login, string Password, bool Persistent, string DeviceName);
