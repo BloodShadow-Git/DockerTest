@@ -56,9 +56,13 @@ namespace NetNotepad.ServiceBase
                             return;
                         }
                         HttpListenerRequest request = context.Request;
-                        Log.Information("Getting request from {0} with id \"{1}\" {2} {3}",
-                                        request.Headers[HTTPHeaders.X_Real_IP], request.Headers[HTTPHeaders.X_Request_ID],
+                        string? requestID = request.Headers[HTTPHeaders.X_Request_ID];
+                        if (!string.IsNullOrEmpty(requestID))
+                        {
+                            Log.Information("Getting request from {0} with id \"{1}\" {2} {3}",
+                                        request.Headers[HTTPHeaders.X_Real_IP], requestID,
                                         request.HttpMethod, request.Url?.AbsolutePath.ToLower() ?? "");
+                        }
                         onHandle?.Invoke(context);
                     });
                 }

@@ -39,14 +39,15 @@ namespace NetNotepad.AuthService.ExternalWorker
             db.RefreshTokens.Add(rtd);
             db.SaveChanges();
             Program.EventHandler.Publish(Events.USER_LOGIN, new UserLogin(user.UserGuid));
-            string JWT = Program.JWTBuilder.Clone().SetLifeSpan(Program.JWTTTL).SetUserGuid(user.UserGuid).Build(out _);
-            Program.RedisDB.StringSet(JWT, rtd.RefreshToken, Program.JWTTTL);
             return new LoginResponse(HttpStatusCode.OK, "CREATED",
-                JWT, rtd.RefreshToken, rtd.DeviceGuid, rtd.CreationDate);
+                Program.JWTBuilder.Clone().SetLifeSpan(Program.JWTTTL).SetUserGuid(user.UserGuid).Build(out _),
+                rtd.RefreshToken, rtd.DeviceGuid, rtd.CreationDate);
         }
         private static Response LoginLRTR(LoginRTRequest lrtr)
         {
             using AppDBContext db = new();
+            User? user = db.Users.AsNoTracking().FirstOrDefault(d => d.UserLogin == lrtr.UserLogin);
+            if (user == null) { return ServiceExceptions.USER_NOT_EXISTS; }
             RefreshTokenData? rtd = db.RefreshTokens.AsNoTracking().FirstOrDefault(d => d.RefreshToken == lrtr.RefreshToken);
             if (rtd == null || (rtd.CreationDate + rtd.TokenTTL) <= DateTime.UtcNow)
             {
@@ -57,15 +58,14 @@ namespace NetNotepad.AuthService.ExternalWorker
                 }
                 return ServiceExceptions.INVALID_TOKEN;
             }
-            User user = db.Users.AsNoTracking().First(d => d.UserGuid == rtd.UserGuid);
+            if (rtd.UserGuid != user.UserGuid) { return ServiceExceptions.INVALID_TOKEN; }
             rtd = GenerateTokens(user, rtd.Persistent, lrtr.DeviceName, rtd.DeviceGuid);
             db.RefreshTokens.Update(rtd);
             db.SaveChanges();
             Program.EventHandler.Publish(Events.USER_LOGIN, new UserLogin(user.UserGuid));
-            string JWT = Program.JWTBuilder.Clone().SetLifeSpan(Program.JWTTTL).SetUserGuid(user.UserGuid).Build(out _);
-            Program.RedisDB.StringSet(JWT, rtd.RefreshToken, Program.JWTTTL);
             return new LoginResponse(HttpStatusCode.OK, "CREATED",
-                JWT, rtd.RefreshToken, rtd.DeviceGuid, rtd.CreationDate);
+                Program.JWTBuilder.Clone().SetLifeSpan(Program.JWTTTL).SetUserGuid(user.UserGuid).Build(out _),
+                rtd.RefreshToken, rtd.DeviceGuid, rtd.CreationDate);
         }
 
         private static Response Register(byte[] payload)
@@ -82,17 +82,16 @@ namespace NetNotepad.AuthService.ExternalWorker
                 db.RefreshTokens.Add(rtd);
                 db.SaveChanges();
                 Program.EventHandler.Publish(Events.USER_CREATED, new UserCreated(user.UserGuid, user.UserLogin));
-                string JWT = Program.JWTBuilder.Clone().SetLifeSpan(Program.JWTTTL).SetUserGuid(user.UserGuid).Build(out _);
-                Program.RedisDB.StringSet(JWT, rtd.RefreshToken, Program.JWTTTL);
                 return new RegisterResponse(HttpStatusCode.OK, "CREATED",
-                    JWT, rtd.RefreshToken, rtd.DeviceGuid, rtd.CreationDate);
+                    Program.JWTBuilder.Clone().SetLifeSpan(Program.JWTTTL).SetUserGuid(user.UserGuid).Build(out _),
+                    rtd.RefreshToken, rtd.DeviceGuid, rtd.CreationDate);
             }
         }
 
         private static RefreshTokenData GenerateTokens(User user, bool persistent, string deviceName, Guid? tokenGuid = null)
         {
             string refreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
-            TimeSpan ttl = persistent ? user.RefreshTokenTTL : TimeSpan.FromHours(12);
+            TimeSpan ttl = persistent ? user.RefreshTokenTTL : Program.RFTTL;
             return new(user.UserGuid, tokenGuid ?? Guid.NewGuid(), refreshToken, DateTime.UtcNow, ttl, deviceName, persistent);
         }
 
@@ -183,13 +182,28 @@ namespace NetNotepad.AuthService.ExternalWorker
 
         private static Response User(byte[] payload)
         {
-            UserGetRequest ugr = SerializeModule.Deserialize<UserGetRequest>(payload);
+            return SerializeModule.TryDeserialize(payload, typeof(UserGetRequest), typeof(UserExistsRequest)) switch
+            {
+                UserGetRequest ugr => UserGR(ugr),
+                UserExistsRequest uer => UserER(uer),
+                _ => ServiceExceptions.BAD_JSON_BODY,
+            };
+        }
+        private static Response UserGR(UserGetRequest ugr)
+        {
             if (ugr == null) { return ServiceExceptions.BAD_JSON_BODY; }
             if (!Program.JWTValidator.Validate(ugr.JWT, out ClaimsPrincipal principal)) { return ServiceExceptions.INVALID_JWT; }
             Guid userGuid = Guid.Parse(principal.FindFirst(JWTNames.SUB)!.Value);
             using AppDBContext db = new();
             User user = db.Users.AsNoTracking().First(d => d.UserGuid == userGuid);
             return new UserGetResponse(HttpStatusCode.OK, "USER_GETTED", user.UserGuid, user.UserLogin, user.RefreshTokenTTL);
+        }
+        private static Response UserER(UserExistsRequest uer)
+        {
+            using AppDBContext db = new();
+            User? user = db.Users.AsNoTracking().FirstOrDefault(d => d.UserLogin == uer.UserLogin);
+            if (user == null) { return ServiceExceptions.USER_NOT_EXISTS; }
+            else { return new Response(HttpStatusCode.OK, "EXISTS"); }
         }
     }
 }

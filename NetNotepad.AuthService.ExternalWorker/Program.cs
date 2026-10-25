@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using NetNotepad.Base;
 using NetNotepad.Contracts;
 using NetNotepad.ServiceBase;
-using Npgsql.Replication;
 using RabbitMQ.AMQP.Client;
 using Serilog;
 using StackExchange.Redis;
@@ -20,6 +19,7 @@ namespace NetNotepad.AuthService.ExternalWorker
         public static IQueueSpecification InternalAuthQueue { get; private set; } = null!;
         public static HookRouter<Response> HTTPHookRouter { get; private set; } = new();
         public static TimeSpan JWTTTL { get; private set; }
+        public static TimeSpan RFTTL { get; private set; }
 
         public static IDatabase RedisDB { get; private set; } = null!;
         public static IConnection HTTPRabbitMQ { get; private set; } = null!;
@@ -38,7 +38,7 @@ namespace NetNotepad.AuthService.ExternalWorker
                 Log.Fatal("Keys are invalid");
                 Environment.Exit(-1);
             }
-            else { Log.Information("Keys validation succeful"); }
+            else { Log.Information("Keys validation successful"); }
             JWTBuilder = JWTBuilder.SetPrivatePem(privatePem);
             JWTValidator = JWTValidator.SetPublicPem(publicPem);
 
@@ -46,17 +46,34 @@ namespace NetNotepad.AuthService.ExternalWorker
             if (jwtTempTTL == null)
             {
                 jwtTempTTL = "12h";
-                Log.Information("No JWT Token TTL enviroment variable found. Use default 12h TTL.");
+                Log.Information("No JWT Token TTL environment variable found. Use default 12h TTL.");
             }
-            if (TimeSpanParser.TryParse(jwtTempTTL, out TimeSpan span))
+            if (TimeSpanParser.TryParse(jwtTempTTL, out TimeSpan jwtspan))
             {
-                JWTTTL = span;
+                JWTTTL = jwtspan;
                 Log.Information($"Set JWT TTL as {JWTTTL}");
             }
             else
             {
-                Log.Information("JWT Token TTL enviroment variable incorrect. Use default 12h TTL.");
+                Log.Information("JWT Token TTL environment variable incorrect. Use default 12h TTL.");
                 JWTTTL = TimeSpan.FromHours(12);
+            }
+
+            string? rfTempTTL = Environment.GetEnvironmentVariable("AUTH_RF_TEMP_TTL");
+            if (rfTempTTL == null)
+            {
+                rfTempTTL = "12h";
+                Log.Information("No Refresh Token TTL environment variable found. Use default 12h TTL.");
+            }
+            if (TimeSpanParser.TryParse(rfTempTTL, out TimeSpan rfspan))
+            {
+                RFTTL = rfspan;
+                Log.Information($"Set Refresh Token TTL as {RFTTL}");
+            }
+            else
+            {
+                Log.Information("Refresh Token TTL environment variable incorrect. Use default 12h TTL.");
+                RFTTL = TimeSpan.FromHours(12);
             }
 
             try
@@ -193,17 +210,17 @@ namespace NetNotepad.AuthService.ExternalWorker
                 if (sr == null)
                 {
                     Log.Error("Service request is invalid");
-                    sr = new("", HttpMethod.Trace, "");
+                    sr = new("", HttpMethod.Trace, "", null);
                 }
-                Log.Information("Request {0} with {1}", sr.Path, sr.Method);
-                if (HTTPHookRouter.Route(sr.Path, sr.Method, Encoding.UTF8.GetBytes(sr.Payload), out Response? responce)) { }
-                else { responce = new ServiceResponce(HttpStatusCode.NotFound, "NOT_FOUND"); }
-                return Task.FromResult(ctx.Message(SerializeModule.Serialize(responce!)));
+                if (!string.IsNullOrEmpty(sr.RequestID)) { Log.Information("Request {0} with {1} ({2})", sr.Path, sr.Method, sr.RequestID); }
+                if (HTTPHookRouter.Route(sr.Path, sr.Method, Encoding.UTF8.GetBytes(sr.Payload), out Response? response)) { }
+                else { response = new ServiceResponse(HttpStatusCode.NotFound, "NOT_FOUND"); }
+                return Task.FromResult(ctx.Message(SerializeModule.Serialize(response!)));
             }
             catch (Exception ex)
             {
                 Log.Fatal(ex, "Exception while get request");
-                return Task.FromResult(ctx.Message(SerializeModule.Serialize(new ServiceErrorResponce(HttpStatusCode.InternalServerError, "INTERNAL_ERROR", ex))));
+                return Task.FromResult(ctx.Message(SerializeModule.Serialize(new ServiceErrorResponse(HttpStatusCode.InternalServerError, "INTERNAL_ERROR", ex))));
             }
         }
     }

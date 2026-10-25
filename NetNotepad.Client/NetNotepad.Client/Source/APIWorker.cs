@@ -34,6 +34,7 @@ namespace NetNotepad.Client.Source
         public static Task<Response> UpdateUser(UpdatePassRequest request) => Request(request, EndpointsContract.User, HttpMethod.Post);
         public static Task<Response> UpdateUser(UpdateRTRequest request) => Request(request, EndpointsContract.User, HttpMethod.Post);
         public static Task<UserGetResponse> GetUser(UserGetRequest request) => Request<UserGetResponse>(request, EndpointsContract.User, HttpMethod.Get);
+        public static Task<Response> UserExists(UserExistsRequest request) => Request(request, EndpointsContract.User, HttpMethod.Get);
 
         private static Task<Response> Request(object request, string path, HttpMethod method) => Request<Response>(request, path, method);
         private static async Task<T> Request<T>(object request, string path, HttpMethod method) where T : Response

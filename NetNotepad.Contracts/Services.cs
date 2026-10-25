@@ -3,9 +3,9 @@ using System.Net;
 namespace NetNotepad.Contracts
 {
     public record Response(HttpStatusCode HttpCode, string Message);
-    public record ServiceRequest(string Path, HttpMethod Method, string Payload);
-    public record ServiceResponce(HttpStatusCode HttpCode, string Message) : Response(HttpCode, Message);
-    public record ServiceErrorResponce(HttpStatusCode HttpCode, string Message, Exception ex) : Response(HttpCode, Message);
+    public record ServiceRequest(string Path, HttpMethod Method, string Payload, string? RequestID);
+    public record ServiceResponse(HttpStatusCode HttpCode, string Message) : Response(HttpCode, Message);
+    public record ServiceErrorResponse(HttpStatusCode HttpCode, string Message, Exception ex) : Response(HttpCode, Message);
 
     public record ServiceExceptions(HttpStatusCode Code, string Message)
     {

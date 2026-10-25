@@ -65,6 +65,7 @@ x-common:
       EVENT_NAME: ${EVENT_NAME}
       AUTH_EVENT_NAME: ${AUTH_EVENT_NAME}
       AUTH_JWT_TEMP_TTL: ${AUTH_JWT_TEMP_TTL}
+      AUTH_RF_TEMP_TTL: ${AUTH_RF_TEMP_TTL}
   pgbouncer: &pgbouncer
     image: edoburu/pgbouncer:v1.26.0-p0
     healthcheck:

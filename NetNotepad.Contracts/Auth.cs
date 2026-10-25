@@ -10,7 +10,7 @@ namespace NetNotepad.Contracts
     }
 
     public record LoginRequest(string Login, string Password, bool Persistent, string DeviceName);
-    public record LoginRTRequest(string RefreshToken, string DeviceName);
+    public record LoginRTRequest(string UserLogin, string RefreshToken, string DeviceName);
     public record LoginResponse(HttpStatusCode HttpCode, string Message, string JWT, string RefreshToken, Guid DeviceGuid, DateTime CreationDate) : Response(HttpCode, Message);
     public record RegisterRequest(string Login, string Password, bool Persistent, string DeviceName);
     public record RegisterResponse(HttpStatusCode HttpCode, string Message, string JWT, string RefreshToken, Guid DeviceGuid, DateTime CreationDate) : Response(HttpCode, Message);
@@ -21,4 +21,5 @@ namespace NetNotepad.Contracts
     public record UpdateRTRequest(string JWT, string Password, TimeSpan NewRefreshTokenTTL);
     public record UserGetRequest(string JWT);
     public record UserGetResponse(HttpStatusCode HttpCode, string Message, Guid UserGuid, string UserLogin, TimeSpan RefreshTokenTTL) : Response(HttpCode, Message);
+    public record UserExistsRequest(string UserLogin);
 }

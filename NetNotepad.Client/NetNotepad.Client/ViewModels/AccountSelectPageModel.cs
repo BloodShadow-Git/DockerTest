@@ -22,15 +22,40 @@ namespace NetNotepad.Client.ViewModels
         public NotifyCollectionChangedSynchronizedViewList<UserProfileView> UserList { get; }
         public ICommand EnterCommand => _enterCommand;
         public ICommand RemoveCommand => _removeCommand;
+
         public IReadOnlyBindableReactiveProperty<bool> ShowPasswordPanel => _showPasswordPanel;
+        public IReadOnlyBindableReactiveProperty<string> AcceptKey => _acceptKey;
+        public IReadOnlyBindableReactiveProperty<string> DeclineKey => _declineKey;
+        public IReadOnlyBindableReactiveProperty<string> PasswordKey => _passwordKey;
+        public IReadOnlyBindableReactiveProperty<string> PasswordRequiredKey => _passwordRequiredKey;
+        public ICommand AcceptPassword => _acceptPassword;
+        public ICommand DeclinePassword => _declinePassword;
+        public BindableReactiveProperty<string> Password { get; } = new();
+
 
         private ObservableList<UserProfileView> _userList = [];
         private ReactiveCommand<UserProfileView> _enterCommand = new();
         private ReactiveCommand<UserProfileView> _removeCommand = new();
         private BindableReactiveProperty<bool> _showPasswordPanel = new(false);
 
+        private TaskCompletionSource? _passwordTCS;
+        private BindableReactiveProperty<string> _acceptKey = new();
+        private BindableReactiveProperty<string> _declineKey = new();
+        private BindableReactiveProperty<string> _passwordKey = new();
+        private BindableReactiveProperty<string> _passwordRequiredKey = new();
+        private ReactiveCommand<Unit> _acceptPassword = new();
+        private ReactiveCommand<Unit> _declinePassword = new();
+
         public AccountSelectPageModel()
         {
+            LocalizationManager.CurrentLocalization.Subscribe(_ =>
+            {
+                _acceptKey.Value = LocalizationManager.Localize<string>(PageLocalizations.ACCEPT_KEY);
+                _declineKey.Value = LocalizationManager.Localize<string>(PageLocalizations.DECLINE_KEY);
+                _passwordRequiredKey.Value = LocalizationManager.Localize<string>(PageLocalizations.PASSWORD_REQUIRED);
+                _passwordKey.Value = LocalizationManager.Localize<string>(PageLocalizations.PASSWORD_KEY);
+            });
+
             UserList = _userList.ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
             _userList.Add(new(null, null, null, null, null));
             foreach ((_, UserProfile profile) in DataManager.UserList) { _userList.Insert(_userList.Count - 1, profile); }
@@ -41,6 +66,9 @@ namespace NetNotepad.Client.ViewModels
             ThemeSwitch.Subscribe(v => Settings.ThemeSwitcher.Value = v);
             _enterCommand.SubscribeAwait(async (e, _) => { await Enter(e); }, AwaitOperation.Drop);
             _removeCommand.SubscribeAwait(async (e, _) => { await Remove(e); }, AwaitOperation.Drop);
+
+            _acceptPassword.Subscribe(_ => { _passwordTCS?.TrySetResult(); });
+            _declinePassword.Subscribe(_ => { _passwordTCS?.TrySetCanceled(); });
         }
 
         private async Task Enter(UserProfileView upv)
@@ -51,20 +79,32 @@ namespace NetNotepad.Client.ViewModels
                 return;
             }
             APIWorker.BaseUrl = new(upv.UserID.Value.UserServer.Value);
-            LoginResponse lr = await APIWorker.Login(new LoginRTRequest(upv.RefreshTokenKey.Value, APIWorker.CLIENT));
-            DataManager.UpdateUser(new(upv.UserID.Value, upv.UserLogin.Value, DateTime.Now, lr.RefreshToken, lr.DeviceGuid));
+            LoginResponse lr = await APIWorker.Login(new LoginRTRequest(upv.UserLogin.Value, upv.RefreshTokenKey.Value, APIWorker.CLIENT));
             if (lr.HttpCode != HttpStatusCode.OK)
             {
-                if (lr.Message == ServiceExceptions.USER_NOT_EXISTS.Message)
+                Response resp = await APIWorker.UserExists(new UserExistsRequest(upv.UserLogin.Value));
+                if (resp.HttpCode != HttpStatusCode.OK)
                 {
                     MainWindow.NM.Show(new Notification(LocalizationManager.Localize<string>(ServiceExceptions.USER_NOT_EXISTS.Message), null, NotificationType.Error));
                     await Remove(upv);
                     return;
                 }
-                _showPasswordPanel.Value = true;
-
-                return;
+                while (true)
+                {
+                    Task passwordTask = AskPassword();
+                    await passwordTask;
+                    _showPasswordPanel.Value = false;
+                    if (passwordTask.IsCanceled) { return; }
+                    lr = await APIWorker.Login(new LoginRequest(upv.UserLogin.Value, Password.Value, true, APIWorker.CLIENT));
+                    if (lr.HttpCode == HttpStatusCode.OK)
+                    {
+                        MainWindow.NM.Show(new Notification(LocalizationManager.Localize<string>(PageLocalizations.SUCCESS_LOGIN_KEY), null, NotificationType.Success));
+                        break;
+                    }
+                    MainWindow.NM.Show(new Notification(LocalizationManager.Localize<string>(PageLocalizations.INVALID_PASSWORD), null, NotificationType.Error));
+                }
             }
+            DataManager.UpdateUser(new(upv.UserID.Value, upv.UserLogin.Value, DateTime.Now, lr.RefreshToken, lr.DeviceGuid));
             DataManager.SelectUser(upv.UserID.Value);
             await MainWindow.NP.PopToRootAsync();
             MainWindow.NP.InsertPage(new UserPage(), MainWindow.NP.CurrentPage!);
@@ -77,9 +117,16 @@ namespace NetNotepad.Client.ViewModels
                 return;
             }
             APIWorker.BaseUrl = new(upv.UserID.Value.UserServer.Value);
-            LoginResponse lr = await APIWorker.Login(new LoginRTRequest(upv.RefreshTokenKey.Value, APIWorker.CLIENT));
+            LoginResponse lr = await APIWorker.Login(new LoginRTRequest(upv.UserLogin.Value, upv.RefreshTokenKey.Value, APIWorker.CLIENT));
             if (lr.HttpCode == HttpStatusCode.OK) { await APIWorker.Logout(new LogoutRTRequest(lr.JWT, upv.DeviceGuid)); }
             DataManager.RemoveUser(upv.UserID.Value);
+        }
+
+        private Task AskPassword()
+        {
+            _showPasswordPanel.Value = true;
+            _passwordTCS = new();
+            return _passwordTCS.Task;
         }
     }
 
@@ -143,5 +190,8 @@ namespace NetNotepad.Client.ViewModels
         public const string ADD_USER = nameof(ADD_USER);
         public const string LAST_LOGIN = nameof(LAST_LOGIN);
         public const string PASSWORD_REQUIRED = nameof(PASSWORD_REQUIRED);
+        public const string INVALID_PASSWORD = nameof(INVALID_PASSWORD);
+        public const string ACCEPT_KEY = nameof(ACCEPT_KEY);
+        public const string DECLINE_KEY = nameof(DECLINE_KEY);
     }
 }

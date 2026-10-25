@@ -81,7 +81,19 @@
                     <ColumnDefinition Width="1*" />
                 </Grid.ColumnDefinitions>
                 <Border Grid.Row="1" Grid.Column="1" Margin="25" Padding="25" CornerRadius="25" Background="{DynamicResource MenuFlyoutItemBackgroundPressed}">
-                    <Button Content="Test" />
+                    <StackPanel Spacing="10">
+                        <TextBlock/>
+                        <TextBox Text="{Binding Password.Value}" PlaceholderText="{Binding PasswordKey.Value}" RevealPassword="False" PasswordChar="*">
+                            <TextBox.KeyBindings>
+                                <KeyBinding Command="{Binding AcceptPassword}" Gesture="Enter"/>
+                                <KeyBinding Command="{Binding DeclinePassword}" Gesture="Escape"/>
+                            </TextBox.KeyBindings>
+                        </TextBox>
+                        <StackPanel Orientation="Horizontal" Spacing="15">
+                            <Button Content="{Binding AcceptKey.Value}" Command="{Binding AcceptPassword}" />
+                            <Button Content="{Binding DeclineKey.Value}" Command="{Binding DeclinePassword}" />
+                        </StackPanel>
+                    </StackPanel>
                 </Border>
             </Grid>
         </Border>

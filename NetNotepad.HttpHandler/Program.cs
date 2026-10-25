@@ -101,9 +101,9 @@ namespace NetNotepad.HttpHandler
                 default:
                     try
                     {
-                        if (path.StartsWith("/auth")) { await Send(AuthQueue, context, path); }
-                        else if (path.StartsWith("/user")) { await Send(UserQueue, context, path); }
-                        else if (path.StartsWith("/notepad")) { await Send(NotepadQueue, context, path); }
+                        if (path.StartsWith("/auth")) { await Send(AuthQueue, context, path, request.Headers[HTTPHeaders.X_Request_ID]); }
+                        else if (path.StartsWith("/user")) { await Send(UserQueue, context, path, request.Headers[HTTPHeaders.X_Request_ID]); }
+                        else if (path.StartsWith("/notepad")) { await Send(NotepadQueue, context, path, request.Headers[HTTPHeaders.X_Request_ID]); }
                         else
                         {
                             Log.Information($"Not found: {path}");
@@ -122,11 +122,11 @@ namespace NetNotepad.HttpHandler
             context.Response.Close();
         }
 
-        private static async Task Send(IQueueSpecification queue, HttpListenerContext context, string path)
+        private static async Task Send(IQueueSpecification queue, HttpListenerContext context, string path, string? requestID)
         {
             IRequester requester = await RabbitMQ.RequesterBuilder().RequestAddress().Queue(queue).Requester().Timeout(Timeout.InfiniteTimeSpan).BuildAsync();
             IMessage message = await requester.PublishAsync(new AmqpMessage(SerializeModule.Serialize(
-                new ServiceRequest(path, new(context.Request.HttpMethod), new StreamReader(context.Request.InputStream).ReadToEnd())
+                new ServiceRequest(path, new(context.Request.HttpMethod), new StreamReader(context.Request.InputStream).ReadToEnd(), requestID)
             )));
             await context.Response.OutputStream.WriteAsync(context.Request.ContentEncoding.GetBytes(message.BodyAsString()));
         }

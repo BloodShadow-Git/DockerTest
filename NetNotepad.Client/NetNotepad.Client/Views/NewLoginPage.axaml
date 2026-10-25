@@ -30,7 +30,7 @@
                     Padding="25" CornerRadius="25" Background="{DynamicResource MenuFlyoutItemBackgroundPressed}">
                 <ScrollViewer>
                     <StackPanel Spacing="5">
-                        <TextBox PlaceholderText="{Binding LoginKey.Value}" AcceptsReturn="False" Text="{Binding Login.Value}" />
+                        <TextBox PlaceholderText="{Binding LoginKey.Value}" AcceptsReturn="False" Text="{Binding Login.Value}"/>
                         <TextBox PlaceholderText="{Binding PasswordKey.Value}" AcceptsReturn="False" RevealPassword="False" PasswordChar="*" Text="{Binding Password.Value}" />
                         <AutoCompleteBox ItemsSource="{Binding Hosts}"
                                          Text="{Binding Host.Value}"
