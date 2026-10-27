@@ -96,6 +96,7 @@ namespace NetNotepad.HttpHandler
             switch (path)
             {
                 case "/health":
+                case "/http/health":
                     response.OutputStream.Write(Encoding.UTF8.GetBytes("OK"));
                     break;
                 default:

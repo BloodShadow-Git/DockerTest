@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
 using NetNotepad.Base;
+using NetNotepad.Client.ViewModels;
 using NetNotepad.Contracts;
 
 namespace NetNotepad.Client.Source
@@ -25,6 +26,19 @@ namespace NetNotepad.Client.Source
         private static HttpClient? _client;
         public static readonly string CLIENT = $"{Application.Current!.Name} ({RuntimeInformation.OSDescription})";
 
+        public static async Task<bool> ServerAvailable(string? baseUri)
+        {
+            if (Uri.TryCreate(baseUri, UriKind.RelativeOrAbsolute, out Uri? result)) { return await ServerAvailable(result); }
+            else { return false; }
+        }
+        public static async Task<bool> ServerAvailable(Uri? baseUri)
+        {
+            if (baseUri == null) { throw new Exception("Base URL is not set"); }
+            HttpClient client = new() { BaseAddress = baseUri };
+            HttpRequestMessage requestMessage = new(HttpMethod.Get, "http/health");
+            HttpResponseMessage responseMessage = await client.SendAsync(requestMessage);
+            return responseMessage.StatusCode == System.Net.HttpStatusCode.OK;
+        }
         public static Task<LoginResponse> Login(LoginRequest request) => Request<LoginResponse>(request, EndpointsContract.Login, HttpMethod.Post);
         public static Task<LoginResponse> Login(LoginRTRequest request) => Request<LoginResponse>(request, EndpointsContract.Login, HttpMethod.Post);
         public static Task<RegisterResponse> Register(RegisterRequest request) => Request<RegisterResponse>(request, EndpointsContract.Register, HttpMethod.Post);

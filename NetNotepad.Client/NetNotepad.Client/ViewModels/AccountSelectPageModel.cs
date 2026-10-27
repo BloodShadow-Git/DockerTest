@@ -78,7 +78,9 @@ namespace NetNotepad.Client.ViewModels
                 await MainWindow.NP.PushAsync(new NewLoginPage());
                 return;
             }
-            APIWorker.BaseUrl = new(upv.UserID.Value.UserServer.Value);
+            Uri userUri = new(upv.UserID.Value.UserServer.Value); ;
+            APIWorker.BaseUrl = userUri;
+            if (await APIWorker.ServerAvailable(userUri)) { MainWindow.NM.Show(new Notification(LocalizationManager.Localize<string>(PageLocalizations.SERVER_UNAVAILABLE), null, NotificationType.Error)); return; }
             LoginResponse lr = await APIWorker.Login(new LoginRTRequest(upv.UserLogin.Value, upv.RefreshTokenKey.Value, APIWorker.CLIENT));
             if (lr.HttpCode != HttpStatusCode.OK)
             {
@@ -136,11 +138,15 @@ namespace NetNotepad.Client.ViewModels
         public readonly IReadOnlyBindableReactiveProperty<string> UserLogin => _userLogin;
         public readonly IReadOnlyBindableReactiveProperty<string> LastLogin => _lastLogin;
         public readonly IReadOnlyBindableReactiveProperty<string> RefreshTokenKey => _refreshTokenKey;
+        public readonly IReadOnlyBindableReactiveProperty<bool> Available => _available;
+        public readonly IReadOnlyBindableReactiveProperty<bool> ShowLoading => _showLoading;
 
         private BindableReactiveProperty<UserIDView> _userID = new();
         private BindableReactiveProperty<string> _userLogin = new();
         private BindableReactiveProperty<string> _lastLogin = new();
         private BindableReactiveProperty<string> _refreshTokenKey = new();
+        private BindableReactiveProperty<bool> _available = new(false);
+        private BindableReactiveProperty<bool> _showLoading = new(false);
 
         public readonly Guid DeviceGuid;
 
@@ -148,7 +154,19 @@ namespace NetNotepad.Client.ViewModels
 
         public UserProfileView(UserIDView? UserID, string? UserLogin, DateTime? LastLogin, string? RefreshTokenKey, Guid? DeviceGuid)
         {
-            if (UserID != null) { _userID.Value = (UserIDView)UserID; }
+            if (UserID == null && UserLogin == null && LastLogin == null && RefreshTokenKey == null && DeviceGuid == null) { _available.Value = true; }
+            if (UserID != null)
+            {
+                _userID.Value = (UserIDView)UserID;
+                BindableReactiveProperty<bool> localAvailable = _available;
+                BindableReactiveProperty<bool> localShowLoading = _showLoading;
+                Task.Run(async () =>
+                {
+                    localShowLoading.Value = true;
+                    localAvailable.Value = await APIWorker.ServerAvailable(UserID.Value.UserServer.Value);
+                    localShowLoading.Value = false;
+                });
+            }
             if (UserLogin != null) { _userLogin.Value = UserLogin; }
             else
             {

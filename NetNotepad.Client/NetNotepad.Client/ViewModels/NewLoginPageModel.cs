@@ -27,6 +27,7 @@ namespace NetNotepad.Client.ViewModels
         public NotifyCollectionChangedSynchronizedViewList<string> Languages { get; } = LocalizationManager.AvailableLocalizations.ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
         public BindableReactiveProperty<bool> ThemeSwitch { get; } = Settings.ThemeSwitcher.ToBindableReactiveProperty();
         public ICommand RegisterCommand => _registerCommand;
+        public IReadOnlyBindableReactiveProperty<bool> IsWaiting => _isWaiting;
 
         public IReadOnlyBindableReactiveProperty<string> LoginKey => _loginKey;
         public IReadOnlyBindableReactiveProperty<string> PasswordKey => _passwordKey;
@@ -34,12 +35,17 @@ namespace NetNotepad.Client.ViewModels
         public IReadOnlyBindableReactiveProperty<string> EnterKey => _enterKey;
         public IReadOnlyBindableReactiveProperty<string> HostPL => _hostPL;
         public IReadOnlyBindableReactiveProperty<string> RegisterKey => _registerKey;
+        public IReadOnlyBindableReactiveProperty<string> ProcessingKey => _processingKey;
+
+
         private BindableReactiveProperty<string> _loginKey { get; } = new();
         private BindableReactiveProperty<string> _passwordKey { get; } = new();
         private BindableReactiveProperty<string> _rememberMeKey { get; } = new();
         private BindableReactiveProperty<string> _enterKey { get; } = new();
         private BindableReactiveProperty<string> _hostPL { get; } = new();
         private BindableReactiveProperty<string> _registerKey { get; } = new();
+        private BindableReactiveProperty<string> _processingKey { get; } = new();
+        public BindableReactiveProperty<bool> _isWaiting { get; } = new();
 
         private ReactiveCommand<Unit> _loginCommand { get; } = new();
         private ReactiveCommand<Unit> _registerCommand { get; } = new();
@@ -54,13 +60,19 @@ namespace NetNotepad.Client.ViewModels
                 _enterKey.Value = LocalizationManager.Localize<string>(PageLocalizations.ENTER_KEY);
                 _hostPL.Value = LocalizationManager.Localize<string>(PageLocalizations.HOST_PL);
                 _registerKey.Value = LocalizationManager.Localize<string>(PageLocalizations.REGISTER_KEY);
+                _processingKey.Value = LocalizationManager.Localize<string>(PageLocalizations.PROCESSING_KEY);
             });
             LanguagesItem.Skip(1).Subscribe(LocalizationManager.SetLocalization);
             ThemeSwitch.Subscribe(v => Settings.ThemeSwitcher.Value = v);
 
             Login.EnableValidation(_ => string.IsNullOrWhiteSpace(Login.Value) ? new ValidationException(LocalizationManager.Localize<string>(PageLocalizations.FIELD_MUST_BE_FILLED_KEY)) : null);
-            Password.EnableValidation(_ => string.IsNullOrWhiteSpace(Login.Value) ? new ValidationException(LocalizationManager.Localize<string>(PageLocalizations.FIELD_MUST_BE_FILLED_KEY)) : null);
-            Host.EnableValidation(_ => string.IsNullOrWhiteSpace(Login.Value) ? new ValidationException(LocalizationManager.Localize<string>(PageLocalizations.FIELD_MUST_BE_FILLED_KEY)) : null);
+            Password.EnableValidation(_ => string.IsNullOrWhiteSpace(Password.Value) ? new ValidationException(LocalizationManager.Localize<string>(PageLocalizations.FIELD_MUST_BE_FILLED_KEY)) : null);
+            Host.EnableValidation(_ =>
+            {
+                if (string.IsNullOrWhiteSpace(Host.Value)) { return new ValidationException(LocalizationManager.Localize<string>(PageLocalizations.FIELD_MUST_BE_FILLED_KEY)); }
+                if (!Uri.TryCreate(Host.Value, UriKind.RelativeOrAbsolute, out Uri? _)) { return new ValidationException(LocalizationManager.Localize<string>(PageLocalizations.INVALID_SERVER_ADDRESS)); }
+                return null;
+            });
 
             Login.Merge(Password).Merge(Host).Subscribe(_ =>
             {
@@ -92,8 +104,16 @@ namespace NetNotepad.Client.ViewModels
                     MainWindow.NM.Show(LocalizationManager.Localize<string>(PageLocalizations.PLEASE_FILL_ALL_FIELDS_KEY), NotificationType.Error);
                     return;
                 }
-                APIWorker.BaseUrl = new(Host.Value);
-
+                _isWaiting.Value = true;
+                Uri userUri;
+                try { userUri = new(Host.Value); }
+                catch
+                {
+                    MainWindow.NM.Show(new Notification(LocalizationManager.Localize<string>(PageLocalizations.INVALID_SERVER_ADDRESS), null, NotificationType.Error));
+                    return;
+                }
+                if (await APIWorker.ServerAvailable(userUri)) { MainWindow.NM.Show(new Notification(LocalizationManager.Localize<string>(PageLocalizations.SERVER_UNAVAILABLE), null, NotificationType.Error)); }
+                APIWorker.BaseUrl = userUri;
                 AuthResult auth = await authCall();
                 if (auth.HttpCode != HttpStatusCode.OK) { auth.Show(NotificationType.Error); return; }
                 UserGetResponse ugr = await APIWorker.GetUser(new(auth.JWT));
@@ -110,6 +130,7 @@ namespace NetNotepad.Client.ViewModels
                 MainWindow.NP.InsertPage(new UserPage(), MainWindow.NP.CurrentPage!);
             }
             catch (Exception ex) { MainWindow.NM.Show(new Notification("Exception", ex.ToString(), NotificationType.Error)); }
+            _isWaiting.Value = false;
         }
 
         private record AuthResult(HttpStatusCode HttpCode, string Message, string JWT, string RefreshToken, DateTime CreationDate, Guid DeviceGuid) : Response(HttpCode, Message);
@@ -127,5 +148,8 @@ namespace NetNotepad.Client.ViewModels
         public const string SUCCESS_REGISTER_KEY = nameof(SUCCESS_REGISTER_KEY);
         public const string PLEASE_FILL_ALL_FIELDS_KEY = nameof(PLEASE_FILL_ALL_FIELDS_KEY);
         public const string FIELD_MUST_BE_FILLED_KEY = nameof(FIELD_MUST_BE_FILLED_KEY);
+        public const string INVALID_SERVER_ADDRESS = nameof(INVALID_SERVER_ADDRESS);
+        public const string SERVER_UNAVAILABLE = nameof(SERVER_UNAVAILABLE);
+        public const string PROCESSING_KEY = nameof(PROCESSING_KEY);
     }
 }
