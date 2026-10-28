@@ -1,7 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Threading.Tasks;
+using NetNotepad.Client.ViewModels;
+using NetNotepad.Contracts;
 using ObservableCollections;
 using R3;
+using static NetNotepad.Client.Source.DataManager;
 
 namespace NetNotepad.Client.Source
 {

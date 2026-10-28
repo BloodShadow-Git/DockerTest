@@ -110,9 +110,15 @@ namespace NetNotepad.Client.ViewModels
                 catch
                 {
                     MainWindow.NM.Show(new Notification(LocalizationManager.Localize<string>(PageLocalizations.INVALID_SERVER_ADDRESS), null, NotificationType.Error));
+                    _isWaiting.Value = false;
                     return;
                 }
-                if (await APIWorker.ServerAvailable(userUri)) { MainWindow.NM.Show(new Notification(LocalizationManager.Localize<string>(PageLocalizations.SERVER_UNAVAILABLE), null, NotificationType.Error)); }
+                if (!await APIWorker.ServerAvailable(userUri))
+                {
+                    MainWindow.NM.Show(new Notification(LocalizationManager.Localize<string>(PageLocalizations.SERVER_UNAVAILABLE), null, NotificationType.Error));
+                    _isWaiting.Value = false;
+                    return;
+                }
                 APIWorker.BaseUrl = userUri;
                 AuthResult auth = await authCall();
                 if (auth.HttpCode != HttpStatusCode.OK) { auth.Show(NotificationType.Error); return; }

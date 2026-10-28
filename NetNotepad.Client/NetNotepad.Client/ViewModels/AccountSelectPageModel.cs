@@ -61,6 +61,12 @@ namespace NetNotepad.Client.ViewModels
             foreach ((_, UserProfile profile) in DataManager.UserList) { _userList.Insert(_userList.Count - 1, profile); }
             DataManager.UserList.ObserveAdd().Subscribe(e => { _userList.Insert(_userList.Count - 1, e.Value.Value); });
             DataManager.UserList.ObserveRemove().Subscribe(e => { _userList.Remove(_userList.FirstOrDefault(x => x.UserID.Value.UserGuid.Value == e.Value.Value.UserID.UserGuid)); });
+            DataManager.UserList.ObserveReplace().Subscribe(e =>
+            {
+                int index = _userList.IndexOf(_userList.FirstOrDefault(d => d.UserID.Value.UserGuid.Value == e.OldValue.Key.UserGuid));
+                if (index < 0) { return; }
+                _userList[index] = e.NewValue.Value;
+            });
 
             LanguagesItem.Skip(1).Subscribe(LocalizationManager.SetLocalization);
             ThemeSwitch.Subscribe(v => Settings.ThemeSwitcher.Value = v);
@@ -80,7 +86,7 @@ namespace NetNotepad.Client.ViewModels
             }
             Uri userUri = new(upv.UserID.Value.UserServer.Value); ;
             APIWorker.BaseUrl = userUri;
-            if (await APIWorker.ServerAvailable(userUri)) { MainWindow.NM.Show(new Notification(LocalizationManager.Localize<string>(PageLocalizations.SERVER_UNAVAILABLE), null, NotificationType.Error)); return; }
+            if (!await APIWorker.ServerAvailable(userUri)) { MainWindow.NM.Show(new Notification(LocalizationManager.Localize<string>(PageLocalizations.SERVER_UNAVAILABLE), null, NotificationType.Error)); return; }
             LoginResponse lr = await APIWorker.Login(new LoginRTRequest(upv.UserLogin.Value, upv.RefreshTokenKey.Value, APIWorker.CLIENT));
             if (lr.HttpCode != HttpStatusCode.OK)
             {
@@ -93,8 +99,9 @@ namespace NetNotepad.Client.ViewModels
                 }
                 while (true)
                 {
+                    Password.Value = "";
                     Task passwordTask = AskPassword();
-                    await passwordTask;
+                    try { await passwordTask; } catch { }
                     _showPasswordPanel.Value = false;
                     if (passwordTask.IsCanceled) { return; }
                     lr = await APIWorker.Login(new LoginRequest(upv.UserLogin.Value, Password.Value, true, APIWorker.CLIENT));
