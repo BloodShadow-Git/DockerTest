@@ -133,7 +133,7 @@ namespace NetNotepad.Client.ViewModels
                 MainWindow.NM.Show(new Notification(LocalizationManager.Localize<string>(successKey), null, NotificationType.Success));
                 DataManager.SelectUser(profile.UserID);
                 await MainWindow.NP.PopToRootAsync();
-                MainWindow.NP.InsertPage(new UserPage(), MainWindow.NP.CurrentPage!);
+                await MainWindow.NP.ReplaceAsync(new UserPage());
             }
             catch (Exception ex) { MainWindow.NM.Show(new Notification("Exception", ex.ToString(), NotificationType.Error)); }
             _isWaiting.Value = false;

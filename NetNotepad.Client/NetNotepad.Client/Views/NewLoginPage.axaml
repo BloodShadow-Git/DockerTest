@@ -27,16 +27,9 @@
         <ToggleButton Grid.Row="0" Grid.ColumnSpan="3" IsChecked="{Binding ThemeSwitch.Value}"
                       HorizontalAlignment="Right" VerticalAlignment="Top" Margin="25">
             <Image Stretch="Uniform" Width="32"
-                   MinHeight="{Binding $self.Width}" MaxHeight="{Binding $self.Width}" MinWidth="{Binding $self.Width}" MaxWidth="{Binding $self.Width}">
-                <Image.Styles>
-                    <Style Selector="ToggleButton[IsChecked=true] Image">
-                        <Setter Property="Source" Value="/Assets/sun.png" />
-                    </Style>
-                    <Style Selector="ToggleButton[IsChecked=false] Image">
-                        <Setter Property="Source" Value="/Assets/moon.png"/>
-                    </Style>
-                </Image.Styles>
-            </Image>
+                   MinHeight="{Binding $self.Width}" MaxHeight="{Binding $self.Width}"
+                   MinWidth="{Binding $self.Width}" MaxWidth="{Binding $self.Width}"
+                   Source="{DynamicResource ThemeIcon}"/>
         </ToggleButton>
         <Border Grid.Column="1" Grid.Row="1"
                 Padding="25" CornerRadius="25" Background="{DynamicResource MenuFlyoutItemBackgroundPressed}">

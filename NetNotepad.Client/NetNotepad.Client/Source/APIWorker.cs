@@ -36,8 +36,12 @@ namespace NetNotepad.Client.Source
             if (baseUri == null) { throw new Exception("Base URL is not set"); }
             HttpClient client = new() { BaseAddress = baseUri };
             HttpRequestMessage requestMessage = new(HttpMethod.Get, "http/health");
-            HttpResponseMessage responseMessage = await client.SendAsync(requestMessage);
-            return responseMessage.StatusCode == System.Net.HttpStatusCode.OK;
+            try
+            {
+                HttpResponseMessage responseMessage = await client.SendAsync(requestMessage);
+                return responseMessage.StatusCode == System.Net.HttpStatusCode.OK;
+            }
+            catch { return false; }
         }
         public static Task<LoginResponse> Login(LoginRequest request) => Request<LoginResponse>(request, EndpointsContract.Login, HttpMethod.Post);
         public static Task<LoginResponse> Login(LoginRTRequest request) => Request<LoginResponse>(request, EndpointsContract.Login, HttpMethod.Post);

@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia.Controls.Notifications;
@@ -116,7 +117,7 @@ namespace NetNotepad.Client.ViewModels
             DataManager.UpdateUser(new(upv.UserID.Value, upv.UserLogin.Value, DateTime.Now, lr.RefreshToken, lr.DeviceGuid));
             DataManager.SelectUser(upv.UserID.Value);
             await MainWindow.NP.PopToRootAsync();
-            MainWindow.NP.InsertPage(new UserPage(), MainWindow.NP.CurrentPage!);
+            await MainWindow.NP.ReplaceAsync(new UserPage());
         }
         private async Task Remove(UserProfileView upv)
         {
@@ -170,7 +171,7 @@ namespace NetNotepad.Client.ViewModels
                 Task.Run(async () =>
                 {
                     localShowLoading.Value = true;
-                    localAvailable.Value = await APIWorker.ServerAvailable(UserID.Value.UserServer.Value);
+                    (await HostMonitor.Watch(UserID.Value.UserServer.Value)).Subscribe(e => localAvailable.Value = e);
                     localShowLoading.Value = false;
                 });
             }

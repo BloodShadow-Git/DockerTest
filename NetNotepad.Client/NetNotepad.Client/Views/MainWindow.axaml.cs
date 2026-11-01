@@ -52,6 +52,12 @@ public partial class MainWindow : Window
             tokensList.Remove(name);
             FileSystem.Save(tokensFile, tokensList);
         });
+        DataManager.UserList.ObserveReplace().Subscribe(e =>
+        {
+            string name = GenerateName(e.OldValue.Key);
+            TokenStore.Remove(name);
+            TokenStore.Save(name, e.NewValue.Value);
+        });
 
         InitializeComponent();
         NP = NavigationPage;

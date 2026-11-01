@@ -16,9 +16,13 @@
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
                     <Bitmap x:Key="AddUserIcon">/Assets/add_user_light.png</Bitmap>
+                    <Bitmap x:Key="ThemeIcon">/Assets/sun.png</Bitmap>
+                    <Bitmap x:Key="Gear">/Assets/gear_light.png</Bitmap>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <Bitmap x:Key="AddUserIcon">/Assets/add_user_dark.png</Bitmap>
+                    <Bitmap x:Key="ThemeIcon">/Assets/moon.png</Bitmap>
+                    <Bitmap x:Key="Gear">/Assets/gear_dark.png</Bitmap>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
