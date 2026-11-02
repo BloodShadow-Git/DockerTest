@@ -25,10 +25,12 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="{Binding Icon.Value}" Stretch="Uniform" />
-                            <Button Content="{Binding ActionName.Value}" Command="{Binding Action}" />
-                        </StackPanel>
+                        <Button Command="{Binding Action}">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="10">
+                                <Image Source="{Binding Icon.Value}" Stretch="UniformToFill" Width="32" />
+                                <TextBlock Text="{Binding ActionName.Value}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
