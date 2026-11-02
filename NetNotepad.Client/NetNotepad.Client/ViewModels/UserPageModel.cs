@@ -31,17 +31,15 @@ namespace NetNotepad.Client.ViewModels
     {
         public IReadOnlyBindableReactiveProperty<string> ActionName => _actionName;
         public ICommand Action => _action;
-        public IReadOnlyBindableReactiveProperty<IObservable<object?>> Icon => _icon;
+        public IReadOnlyBindableReactiveProperty<IImage?> Icon => _icon;
 
         private BindableReactiveProperty<string> _actionName = new();
         private ReactiveCommand<Unit> _action = new();
-        private BindableReactiveProperty<IObservable<object?>> _icon = new();
+        private BindableReactiveProperty<IImage?> _icon = new();
 
         public UserAction(string actionNameKey, string iconName, Action? action)
         {
-            // Application.Current!.Resources.TryGetResource(iconName, Application.Current!.ActualThemeVariant, out object? value);
-            // if (value != null && value is Bitmap bitmap) { _icon.Value = bitmap; }
-            _icon.Value = Application.Current!.Resources.GetResourceObservable(iconName);
+            Application.Current!.ActualThemeVariantChanged += (_, _) => _icon.Value = Application.Current!.FindResource(iconName);
             BindableReactiveProperty<string> localActionName = _actionName;
             LocalizationManager.CurrentLocalization.Subscribe(_ => { localActionName.Value = LocalizationManager.Localize<string>(actionNameKey); });
             _action.Subscribe(_ => action?.Invoke());
