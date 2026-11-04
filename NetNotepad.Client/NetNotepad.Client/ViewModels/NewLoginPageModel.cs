@@ -25,7 +25,7 @@ namespace NetNotepad.Client.ViewModels
         public ICommand LoginCommand => _loginCommand;
         public BindableReactiveProperty<string> LanguagesItem { get; } = new(LocalizationManager.CurrentLocalization.CurrentValue);
         public NotifyCollectionChangedSynchronizedViewList<string> Languages { get; } = LocalizationManager.AvailableLocalizations.ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
-        public BindableReactiveProperty<bool> ThemeSwitch { get; } = Settings.ThemeSwitcher.ToBindableReactiveProperty();
+        public BindableReactiveProperty<bool> ThemeSwitch { get; } = Settings.ThemeSwitcherBool.ToBindableReactiveProperty();
         public ICommand RegisterCommand => _registerCommand;
         public IReadOnlyBindableReactiveProperty<bool> IsWaiting => _isWaiting;
 
@@ -63,7 +63,7 @@ namespace NetNotepad.Client.ViewModels
                 _processingKey.Value = LocalizationManager.Localize<string>(PageLocalizations.PROCESSING_KEY);
             });
             LanguagesItem.Skip(1).Subscribe(LocalizationManager.SetLocalization);
-            ThemeSwitch.Subscribe(v => Settings.ThemeSwitcher.Value = v);
+            ThemeSwitch.Subscribe(v => Settings.ThemeSwitcherBool.Value = v);
 
             Login.EnableValidation(_ => string.IsNullOrWhiteSpace(Login.Value) ? new ValidationException(LocalizationManager.Localize<string>(PageLocalizations.FIELD_MUST_BE_FILLED_KEY)) : null);
             Password.EnableValidation(_ => string.IsNullOrWhiteSpace(Password.Value) ? new ValidationException(LocalizationManager.Localize<string>(PageLocalizations.FIELD_MUST_BE_FILLED_KEY)) : null);

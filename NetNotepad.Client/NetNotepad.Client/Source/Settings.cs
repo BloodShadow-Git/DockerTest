@@ -7,7 +7,8 @@ namespace NetNotepad.Client.Source
 {
     public static class Settings
     {
-        public static ReactiveProperty<bool> ThemeSwitcher { get; } = new();
+        public static ReactiveProperty<bool> ThemeSwitcherBool { get; } = new();
+        public static ReactiveProperty<ThemeVariant> ThemeSwitcher { get; } = new();
         public static ReactiveProperty<string> CurrentLanguage { get; } = new();
         public static ReactiveProperty<int> UpdateTimer { get; } = new(5);
 
@@ -15,11 +16,12 @@ namespace NetNotepad.Client.Source
 
         static Settings()
         {
-            ThemeSwitcher.Value = ConvertToBool(Application.Current!.RequestedThemeVariant!);
-            ThemeSwitcher.Subscribe(_ =>
+            ThemeSwitcher.Subscribe(_ => Application.Current!.RequestedThemeVariant = ThemeSwitcher.Value);
+            ThemeSwitcherBool.Value = ConvertToBool(Application.Current!.RequestedThemeVariant!);
+            ThemeSwitcherBool.Subscribe(_ =>
             {
-                if (ThemeSwitcher.CurrentValue) { Application.Current!.RequestedThemeVariant = ThemeVariant.Light; }
-                else { Application.Current!.RequestedThemeVariant = ThemeVariant.Dark; }
+                if (ThemeSwitcherBool.CurrentValue) { ThemeSwitcher.Value = ThemeVariant.Light; }
+                else { ThemeSwitcher.Value = ThemeVariant.Dark; }
             });
             LocalizationManager.CurrentLocalization.Subscribe(_ => { CurrentLanguage.Value = LocalizationManager.CurrentLocalization.CurrentValue; });
             CurrentLanguage.Subscribe(_ => { LocalizationManager.SetLocalization(CurrentLanguage.Value); });
@@ -28,7 +30,7 @@ namespace NetNotepad.Client.Source
                 .Merge(CurrentLanguage.AsUnitObservable())
                 .Subscribe(_ => Save());
         }
-        private record SettingsData(bool Theme, string Language, int Timer);
+        private record SettingsData(ThemeVariant Theme, string Language, int Timer);
 
         private static bool ConvertToBool(ThemeVariant theme)
         {

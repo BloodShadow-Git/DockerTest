@@ -19,7 +19,7 @@ namespace NetNotepad.Client.ViewModels
     {
         public BindableReactiveProperty<string> LanguagesItem { get; } = new(LocalizationManager.CurrentLocalization.CurrentValue);
         public NotifyCollectionChangedSynchronizedViewList<string> Languages { get; } = LocalizationManager.AvailableLocalizations.ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
-        public BindableReactiveProperty<bool> ThemeSwitch { get; } = Settings.ThemeSwitcher.ToBindableReactiveProperty();
+        public BindableReactiveProperty<bool> ThemeSwitch { get; } = Settings.ThemeSwitcherBool.ToBindableReactiveProperty();
         public NotifyCollectionChangedSynchronizedViewList<UserProfileView> UserList { get; }
         public ICommand EnterCommand => _enterCommand;
         public ICommand RemoveCommand => _removeCommand;
@@ -70,7 +70,7 @@ namespace NetNotepad.Client.ViewModels
             });
 
             LanguagesItem.Skip(1).Subscribe(LocalizationManager.SetLocalization);
-            ThemeSwitch.Subscribe(v => Settings.ThemeSwitcher.Value = v);
+            ThemeSwitch.Subscribe(v => Settings.ThemeSwitcherBool.Value = v);
             _enterCommand.SubscribeAwait(async (e, _) => { await Enter(e); }, AwaitOperation.Drop);
             _removeCommand.SubscribeAwait(async (e, _) => { await Remove(e); }, AwaitOperation.Drop);
 

@@ -9,7 +9,22 @@
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
         to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:UserPageModel />
+        <vm:SettingsPageModel />
     </Design.DataContext>
-    <Panel/>
+    <StackPanel Spacing="10" Margin="15">
+        <StackPanel Spacing="15" Orientation="Horizontal">
+            <TextBlock Text="{Binding ThemeKey.Value}" VerticalAlignment="Center" />
+            <ComboBox SelectedIndex="{Binding ThemeValue.Value}" ItemsSource="{Binding ThemeValues}"  VerticalAlignment="Center" />
+        </StackPanel>
+        <StackPanel Spacing="15" Orientation="Horizontal">
+            <TextBlock Text="{Binding TimerKey.Value}" VerticalAlignment="Center" />
+            <NumericUpDown Minimum="0" Value="{Binding TimerValue.Value}" VerticalAlignment="Center" FormatString="0" />
+            <TextBlock Text="{Binding SecKey.Value}" VerticalAlignment="Center" />
+        </StackPanel>
+        <StackPanel Spacing="15" Orientation="Horizontal">
+            <TextBlock Text="{Binding CurrentLanguageKey.Value}" VerticalAlignment="Center" />
+            <ComboBox SelectedItem="{Binding LanguagesItem.Value}" ItemsSource="{Binding Languages}"
+                      Grid.Row="2" Grid.ColumnSpan="3" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="25" />
+        </StackPanel>
+    </StackPanel>
 </ContentPage>
