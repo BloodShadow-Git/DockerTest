@@ -12,7 +12,7 @@ namespace NetNotepad.Client.ViewModels
     public partial class UserPageModel : ViewModelBase
     {
         public ObservableList<UserAction> Actions { get; } = [
-            new(PageLocalizations.SETTINGS_KEY, "Gear", async () => await MainWindow.NP.PushAsync(new SettingsPage()))
+            new(PageLocalizations.SETTINGS_KEY, "Gear", () => MainWindow.NP.PushAsync(new SettingsPage()).Wait())
         ];
 
         public UserPageModel()
