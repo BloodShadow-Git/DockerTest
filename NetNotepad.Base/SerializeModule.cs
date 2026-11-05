@@ -22,8 +22,16 @@ namespace NetNotepad.Base
 
         public static byte[] Serialize(object obj) => Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj, _settings));
         public static Task<byte[]> SerializeAsync(object obj) => Task.Run(() => Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj, _settings)));
-        public static T Deserialize<T>(byte[] source) => JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(source), _settings)!;
-        public static Task<T> DeserializeAsync<T>(byte[] source) => Task.Run(() => JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(source), _settings)!);
+        public static T Deserialize<T>(byte[] source)
+        {
+            try { return JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(source), _settings)!; }
+            catch { return default!; }
+        }
+        public static Task<T> DeserializeAsync<T>(byte[] source) => Task.Run(() =>
+        {
+            try { return JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(source), _settings)!; }
+            catch { return default!; }
+        });
         public static object TryDeserialize(byte[] source, params Type[] types)
         {
             if (types.Length <= 0) { return null!; }
