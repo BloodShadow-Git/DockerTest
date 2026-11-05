@@ -2,6 +2,7 @@ using System;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Media.Imaging;
+using NetNotepad.Client.Source;
 using NetNotepad.Client.Source.Localization;
 using NetNotepad.Client.Views;
 using ObservableCollections;
@@ -11,13 +12,28 @@ namespace NetNotepad.Client.ViewModels
 {
     public partial class UserPageModel : ViewModelBase
     {
+        public IReadOnlyBindableReactiveProperty<string> UserName { get; } = DataManager.SelectedUser.Select(x => DataManager.UserList[x].UserLogin).ToReadOnlyBindableReactiveProperty("NULL");
+        public IReadOnlyBindableReactiveProperty<string> LogoutKey => _logoutKey;
+        public ICommand LogoutCommand => _logoutCommand;
+
         public ObservableList<UserAction> Actions { get; } = [
             new(PageLocalizations.SETTINGS_KEY, "Gear", () => MainWindow.NP.PushAsync(new SettingsPage()).Wait())
         ];
+        private ReactiveCommand<Unit> _logoutCommand = new();
+        private BindableReactiveProperty<string> _logoutKey = new();
 
         public UserPageModel()
         {
+            _logoutCommand.SubscribeAwait(async (_, _) =>
+            {
+                await MainWindow.NP.PopToRootAsync();
+                await MainWindow.NP.ReplaceAsync(new AccountSelectPage());
+            });
 
+            LocalizationManager.CurrentLocalization.Subscribe(_ =>
+            {
+                _logoutKey.Value = LocalizationManager.Localize<string>(PageLocalizations.LOGOUT_KEY);
+            });
         }
     }
 
@@ -45,5 +61,6 @@ namespace NetNotepad.Client.ViewModels
     public static partial class PageLocalizations
     {
         public const string SETTINGS_KEY = nameof(SETTINGS_KEY);
+        public const string LOGOUT_KEY = nameof(LOGOUT_KEY);
     }
 }
