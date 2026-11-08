@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using NetNotepad.Contracts;
 
@@ -8,28 +9,29 @@ namespace NetNotepad.ServiceBase
 {
     public class JWTValidator
     {
-        private string? _publicPem;
+        private byte[]? _publicPem;
 
-        public bool Available => !string.IsNullOrEmpty(_publicPem);
+        public bool Available => _publicPem != null;
 
-        public JWTValidator SetPublicPem(string? publicPem)
+        public JWTValidator SetPublicPem(byte[]? publicPem)
         {
-            if (string.IsNullOrEmpty(publicPem)) { throw new Exception("Empty private pem"); }
+            if (publicPem == null) { throw new Exception("Empty private pem"); }
             _publicPem = publicPem;
             return this;
         }
 
         public bool Validate(string token, out ClaimsPrincipal principal)
         {
-            if (string.IsNullOrEmpty(_publicPem)) { throw new Exception("Empty public key"); }
+            if (_publicPem == null) { throw new Exception("Empty public key"); }
             if (string.IsNullOrEmpty(token)) { throw new Exception("Empty token"); }
             principal = null!;
 
             try
             {
-                RSA rsa = RSA.Create();
-                rsa.ImportFromPem(_publicPem);
-                RsaSecurityKey key = new(rsa);
+#pragma warning disable
+                using MLDsa mLDsa = MLDsa.ImportFromPem(Encoding.ASCII.GetString(_publicPem));
+#pragma warning restore
+                AsymmetricSecurityKey key = new MlDsaSecurityKey(mLDsa);
                 TokenValidationParameters parameters = new()
                 {
                     ValidateIssuerSigningKey = true,
@@ -45,7 +47,7 @@ namespace NetNotepad.ServiceBase
 
                     ClockSkew = TimeSpan.Zero,
 
-                    ValidAlgorithms = [SecurityAlgorithms.RsaSha256]
+                    ValidAlgorithms = [SecurityAlgorithms.MlDsa65]
                 };
 
                 JwtSecurityTokenHandler handler = new();

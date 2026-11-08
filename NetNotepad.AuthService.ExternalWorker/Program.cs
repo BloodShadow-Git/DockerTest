@@ -1,4 +1,7 @@
-﻿using System.Net;
+﻿using System.Buffers;
+using System.Formats.Asn1;
+using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using NetNotepad.Base;
@@ -31,16 +34,7 @@ namespace NetNotepad.AuthService.ExternalWorker
             BloodLog.CreateLogger(typeof(Program).Namespace);
 
             Log.Information("Start application");
-            string privatePem = File.ReadAllText("/run/secrets/jwt-secret-pri").Trim();
-            string publicPem = File.ReadAllText("/run/secrets/jwt-secret-pub").Trim();
-            if (!JWTKeyValidator.ValidatePems(privatePem, publicPem))
-            {
-                Log.Fatal("Keys are invalid");
-                Environment.Exit(-1);
-            }
-            else { Log.Information("Keys validation successful"); }
-            JWTBuilder = JWTBuilder.SetPrivatePem(privatePem);
-            JWTValidator = JWTValidator.SetPublicPem(publicPem);
+            ValidateKeys();
 
             string? jwtTempTTL = Environment.GetEnvironmentVariable("AUTH_JWT_TEMP_TTL");
             if (jwtTempTTL == null)
@@ -163,6 +157,20 @@ namespace NetNotepad.AuthService.ExternalWorker
 
             await HTTPRabbitMQ.ResponderBuilder().RequestQueue(HTTPAuthQueue).Handler(HandleHTTPRequest).BuildAsync();
             await HTTPServer.Start(HandleEndpoint);
+        }
+
+        private static void ValidateKeys()
+        {
+            byte[] privatePem = File.ReadAllBytes("/run/secrets/jwt-secret-pri");
+            byte[] publicPem = File.ReadAllBytes("/run/secrets/jwt-secret-pub");
+            if (!JWTKeyValidator.ValidatePems(privatePem, publicPem))
+            {
+                Log.Fatal("Keys are invalid");
+                Environment.Exit(-1);
+            }
+            else { Log.Information("Keys validation successful"); }
+            JWTBuilder = JWTBuilder.SetPrivatePem(privatePem);
+            JWTValidator = JWTValidator.SetPublicPem(publicPem);
         }
 
         private static async Task CreateHTTPQueues()

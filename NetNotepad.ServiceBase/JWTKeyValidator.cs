@@ -1,20 +1,20 @@
 using System.Security.Cryptography;
+using System.Text;
 
 namespace NetNotepad.ServiceBase
 {
     public static class JWTKeyValidator
     {
-        public static bool ValidatePems(string privatePem, string publicPem)
+        public static bool ValidatePems(byte[] privatePem, byte[] publicPem)
         {
-            using RSA privatePemRSA = RSA.Create();
-            privatePemRSA.ImportFromPem(privatePem);
-
-            using RSA publicPemRSA = RSA.Create();
-            publicPemRSA.ImportFromPem(publicPem);
+#pragma warning disable
+            using MLDsa privatePemMLDsa = MLDsa.ImportFromPem(Encoding.ASCII.GetString(privatePem));
+            using MLDsa publicPemMLDsa = MLDsa.ImportFromPem(Encoding.ASCII.GetString(publicPem));
+#pragma warning restore
 
             byte[] data = Guid.NewGuid().ToByteArray();
-            byte[] sign = privatePemRSA.SignData(data, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-            return publicPemRSA.VerifyData(data, sign, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            byte[] sign = privatePemMLDsa.SignData(data);
+            return publicPemMLDsa.VerifyData(data, sign);
         }
     }
 }

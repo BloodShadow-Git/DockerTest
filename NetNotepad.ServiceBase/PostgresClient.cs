@@ -15,7 +15,7 @@ namespace NetNotepad.ServiceBase
             string DB_User = Environment.GetEnvironmentVariable(userVar) ?? throw new Exception("No Postgres DB user string"); ;
             string DB_Pass = Environment.GetEnvironmentVariable(passVar) ?? throw new Exception("No Postgres DB password string"); ;
             Log.Information("Found postgres DB host, port, name, user, password strings");
-            string postgresConnect = string.Format("Host={0};Port={1};Database={2};Username={3};Password={4}", DB_Host, DB_Port, DB_Name, DB_User, DB_Pass);
+            string postgresConnect = string.Format("Host={0};Port={1};Database={2};Username={3};Password={4};Maximum Pool Size=5;Minimum Pool Size=0;", DB_Host, DB_Port, DB_Name, DB_User, DB_Pass);
             await using NpgsqlConnection connection = new(postgresConnect);
             await connection.OpenAsync();
             await connection.CloseAsync();
