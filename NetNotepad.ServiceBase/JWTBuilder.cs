@@ -52,11 +52,8 @@ namespace NetNotepad.ServiceBase
                 new(JwtRegisteredClaimNames.Aud, JWTNames.AUD),
                 new(JwtRegisteredClaimNames.Jti, jti.ToString())];
 
-#pragma warning disable
-            using MLDsa mLDsa = MLDsa.ImportFromPem(Encoding.ASCII.GetString(_privatePem));
-#pragma warning restore
-            AsymmetricSecurityKey key = new MlDsaSecurityKey(mLDsa);
-            SigningCredentials credentials = new(key, SecurityAlgorithms.MlDsa65);
+            AsymmetricSecurityKey key = EncryptionManager.CreateKey(_privatePem);
+            SigningCredentials credentials = new(key, EncryptionManager.Algorithm);
 
             JwtSecurityToken token = new(claims: claims, notBefore: now, expires: now.Add((TimeSpan)_lifespan), signingCredentials: credentials);
 

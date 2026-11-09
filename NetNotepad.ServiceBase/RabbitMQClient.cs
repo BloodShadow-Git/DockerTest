@@ -15,6 +15,7 @@ namespace NetNotepad.ServiceBase
             string rabbitPass = Environment.GetEnvironmentVariable(passVar) ?? throw new Exception("No RabbitMQ password string");
             Log.Information("Found rabbitMQ host, port, user, password strings");
             IEnvironment environment = AmqpEnvironment.Create(new ConnectionSettings("amqp", rabbitHost, rabbitPort, rabbitUser, rabbitPass));
+            Log.Information("Successfully connected to {0}:{1} as {2}", rabbitHost, rabbitPort, rabbitUser);
             return environment.CreateConnectionAsync();
         }
     }

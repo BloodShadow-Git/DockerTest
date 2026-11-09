@@ -28,10 +28,7 @@ namespace NetNotepad.ServiceBase
 
             try
             {
-#pragma warning disable
-                using MLDsa mLDsa = MLDsa.ImportFromPem(Encoding.ASCII.GetString(_publicPem));
-#pragma warning restore
-                AsymmetricSecurityKey key = new MlDsaSecurityKey(mLDsa);
+                AsymmetricSecurityKey key = EncryptionManager.CreateKey(_publicPem);
                 TokenValidationParameters parameters = new()
                 {
                     ValidateIssuerSigningKey = true,
@@ -47,7 +44,7 @@ namespace NetNotepad.ServiceBase
 
                     ClockSkew = TimeSpan.Zero,
 
-                    ValidAlgorithms = [SecurityAlgorithms.MlDsa65]
+                    ValidAlgorithms = [EncryptionManager.Algorithm]
                 };
 
                 JwtSecurityTokenHandler handler = new();
